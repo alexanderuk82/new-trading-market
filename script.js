@@ -53,48 +53,62 @@ class TradingStrategyApp {
 
     setupEventListeners() {
         // Botón de análisis
-        document.getElementById('analyzeBtn').addEventListener('click', () => {
-            this.performAnalysis();
-        });
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        if (analyzeBtn) {
+            analyzeBtn.addEventListener('click', () => {
+                this.performAnalysis();
+            });
+        }
 
         // Input de ticker
         const tickerInput = document.getElementById('tickerInput');
-        tickerInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                this.performAnalysis();
-            }
-        });
+        if (tickerInput) {
+            tickerInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    this.performAnalysis();
+                }
+            });
 
-        tickerInput.addEventListener('input', (e) => {
-            this.currentTicker = e.target.value.toUpperCase();
-        });
+            tickerInput.addEventListener('input', (e) => {
+                this.currentTicker = e.target.value.toUpperCase();
+            });
+        }
 
         // Botones de acción
-        document.getElementById('saveAnalysis').addEventListener('click', () => {
-            this.saveCurrentAnalysis();
-        });
+        const saveBtn = document.getElementById('saveAnalysis');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', () => {
+                this.saveCurrentAnalysis();
+            });
+        }
 
-        document.getElementById('exportData').addEventListener('click', () => {
-            this.exportCurrentAnalysis();
-        });
+        const exportBtn = document.getElementById('exportData');
+        if (exportBtn) {
+            exportBtn.addEventListener('click', () => {
+                this.exportCurrentAnalysis();
+            });
+        }
 
-        document.getElementById('clearHistory').addEventListener('click', () => {
-            this.clearAnalysisHistory();
-        });
+        const clearBtn = document.getElementById('clearHistory');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                this.clearAnalysisHistory();
+            });
+        }
 
         // Botones de pares rápidos
         document.querySelectorAll('.pair-btn').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const pair = e.target.dataset.pair;
-                document.getElementById('tickerInput').value = pair;
-                this.currentTicker = pair;
+                const tickerInput = document.getElementById('tickerInput');
+                if (tickerInput) {
+                    tickerInput.value = pair;
+                    this.currentTicker = pair;
+                }
                 
                 // Actualizar botón activo
                 document.querySelectorAll('.pair-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
-                
-                // Auto-analizar si se desea
-                // this.performAnalysis();
             });
         });
     }
@@ -109,39 +123,41 @@ class TradingStrategyApp {
     }
 
     showInitialState() {
-        document.getElementById('verdictDirection').textContent = 'Presiona "Confirmar Estrategia" para analizar';
-        document.getElementById('verdictDirection').className = 'neutral';
-        
-        document.getElementById('verdictConfidence').textContent = 'Esperando análisis...';
-        document.getElementById('verdictConfidence').className = 'neutral';
-        
-        document.getElementById('oandaStatus').textContent = 'Listo para conectar';
-        document.getElementById('oandaStatus').className = 'data-status';
-        
-        document.getElementById('investingStatus').textContent = 'Listo para obtener datos';
-        document.getElementById('investingStatus').className = 'data-status';
-        
-        document.getElementById('oandaPrice').textContent = 'Haz clic para obtener precio';
-        document.getElementById('investingOverview').textContent = 'Análisis pendiente';
+        this.safeUpdateElement('verdictDirection', 'Presiona "Confirmar Estrategia" para analizar', 'neutral');
+        this.safeUpdateElement('verdictConfidence', 'Esperando análisis...', 'neutral');
+        this.safeUpdateElement('oandaStatus', 'Listo para conectar', 'data-status');
+        this.safeUpdateElement('investingStatus', 'Listo para obtener datos', 'data-status');
+        this.safeUpdateElement('oandaPrice', 'Haz clic para obtener precio');
+        this.safeUpdateElement('investingOverview', 'Análisis pendiente');
     }
 
     showOrderFlowInitialState() {
         // Estados iniciales para Order Flow
-        document.getElementById('liquidityLevel').textContent = 'Esperando datos...';
-        document.getElementById('liquidityTrend').textContent = 'Pendiente de análisis';
-        document.getElementById('orderFlowDirection').textContent = 'Sin datos';
-        document.getElementById('orderFlowStrength').textContent = 'Calculando...';
-        document.getElementById('imbalanceStatus').textContent = 'No detectados';
-        document.getElementById('nextLevel').textContent = '--';
-        document.getElementById('criticalZone').textContent = '--';
-        document.getElementById('volumeProfile').textContent = 'Generando perfil...';
-        document.getElementById('pocLevel').textContent = '--';
-        document.getElementById('vpocStrength').textContent = '--';
-        document.getElementById('predictionDirection').textContent = 'PENDIENTE';
-        document.getElementById('predictionProbability').textContent = '-- %';
-        document.getElementById('targetPrice').textContent = '--';
-        document.getElementById('estimatedTime').textContent = '--';
-        document.getElementById('stopLevel').textContent = '--';
+        this.safeUpdateElement('liquidityLevel', 'Esperando datos...');
+        this.safeUpdateElement('liquidityTrend', 'Pendiente de análisis');
+        this.safeUpdateElement('orderFlowDirection', 'Sin datos');
+        this.safeUpdateElement('orderFlowStrength', 'Calculando...');
+        this.safeUpdateElement('imbalanceStatus', 'No detectados');
+        this.safeUpdateElement('nextLevel', '--');
+        this.safeUpdateElement('criticalZone', '--');
+        this.safeUpdateElement('volumeProfile', 'Generando perfil...');
+        this.safeUpdateElement('pocLevel', '--');
+        this.safeUpdateElement('vpocStrength', '--');
+        this.safeUpdateElement('predictionDirection', 'PENDIENTE');
+        this.safeUpdateElement('predictionProbability', '-- %');
+        this.safeUpdateElement('targetPrice', '--');
+        this.safeUpdateElement('estimatedTime', '--');
+        this.safeUpdateElement('stopLevel', '--');
+    }
+
+    safeUpdateElement(id, content, className = null) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = content;
+            if (className) {
+                element.className = className;
+            }
+        }
     }
 
     async performAnalysis() {
@@ -155,7 +171,8 @@ class TradingStrategyApp {
             this.showLoadingStates();
             
             // Actualizar ticker actual
-            this.currentTicker = document.getElementById('tickerInput').value.toUpperCase() || 'XAUUSD';
+            const tickerInput = document.getElementById('tickerInput');
+            this.currentTicker = (tickerInput?.value || 'XAUUSD').toUpperCase();
             
             this.showNotification('🔍 Iniciando análisis completo...');
             
@@ -199,7 +216,7 @@ class TradingStrategyApp {
                 analysis = this.getFallbackAnalysis();
             }
             
-            // GENERAR RECOMENDACIÓN DE TRADE - ARREGLAR LÓGICA
+            // GENERAR RECOMENDACIÓN DE TRADE
             let tradeRecommendation = null;
             if (this.tradeRecommender) {
                 try {
@@ -248,8 +265,10 @@ class TradingStrategyApp {
             
             // Rehabilitar botón siempre
             const analyzeBtn = document.getElementById('analyzeBtn');
-            analyzeBtn.disabled = false;
-            analyzeBtn.textContent = 'Confirmar Estrategia';
+            if (analyzeBtn) {
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = 'Confirmar Estrategia';
+            }
         }
     }
 
@@ -449,75 +468,38 @@ class TradingStrategyApp {
 
     showLoadingStates() {
         // Estados de carga
-        document.getElementById('verdictDirection').textContent = 'Analizando...';
-        document.getElementById('verdictDirection').className = 'loading';
-        
-        document.getElementById('verdictConfidence').textContent = 'Calculando confianza...';
-        document.getElementById('verdictConfidence').className = 'loading';
-        
-        document.getElementById('oandaStatus').textContent = 'Conectando a OANDA...';
-        document.getElementById('oandaStatus').className = 'data-status loading';
-        
-        document.getElementById('investingStatus').textContent = 'Obteniendo datos técnicos...';
-        document.getElementById('investingStatus').className = 'data-status loading';
-        
-        document.getElementById('oandaPrice').textContent = 'Cargando...';
-        document.getElementById('investingOverview').textContent = 'Procesando...';
+        this.safeUpdateElement('verdictDirection', 'Analizando...', 'loading');
+        this.safeUpdateElement('verdictConfidence', 'Calculando confianza...', 'loading');
+        this.safeUpdateElement('oandaStatus', 'Conectando a OANDA...', 'data-status loading');
+        this.safeUpdateElement('investingStatus', 'Obteniendo datos técnicos...', 'data-status loading');
+        this.safeUpdateElement('oandaPrice', 'Cargando...');
+        this.safeUpdateElement('investingOverview', 'Procesando...');
         
         // Estados de carga para Order Flow
         this.showOrderFlowLoadingStates();
         
         // Estados de carga para noticias
-        document.getElementById('newsOverview').textContent = 'Obteniendo noticias...';
-        document.getElementById('marketImpact').textContent = 'Analizando impacto...';
-        document.getElementById('newsWarnings').textContent = 'Verificando alertas...';
+        this.safeUpdateElement('newsOverview', 'Obteniendo noticias...');
+        this.safeUpdateElement('marketImpact', 'Analizando impacto...');
+        this.safeUpdateElement('newsWarnings', 'Verificando alertas...');
         
         // Deshabilitar botón mientras analiza
         const analyzeBtn = document.getElementById('analyzeBtn');
-        analyzeBtn.disabled = true;
-        analyzeBtn.textContent = 'Analizando...';
+        if (analyzeBtn) {
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = 'Analizando...';
+        }
     }
 
     showOrderFlowLoadingStates() {
-        document.getElementById('liquidityLevel').textContent = 'Analizando liquidez...';
-        document.getElementById('liquidityTrend').textContent = 'Calculando tendencia...';
-        document.getElementById('orderFlowDirection').textContent = 'Detectando flujo...';
-        document.getElementById('orderFlowStrength').textContent = 'Midiendo fuerza...';
-        document.getElementById('imbalanceStatus').textContent = 'Buscando imbalances...';
-        document.getElementById('volumeProfile').textContent = 'Creando perfil...';
-        document.getElementById('predictionDirection').textContent = 'CALCULANDO...';
-        document.getElementById('predictionProbability').textContent = 'Procesando...';
-    }
-
-    updateUI(analysis) {
-        try {
-            console.log('🎨 Actualizando UI con análisis:', analysis);
-            
-            // Verificar que analysis tiene la estructura correcta
-            if (!analysis || !analysis.verdict) {
-                console.error('❌ Análisis no válido para UI, usando fallback');
-                analysis = this.getFallbackAnalysis();
-            }
-            
-            // Actualizar veredicto final
-            this.updateFinalVerdict(analysis.verdict);
-            
-            // Actualizar datos de OANDA
-            this.updateOandaData(analysis.oanda);
-            
-            // Actualizar datos de Investing
-            this.updateInvestingData(analysis.investing);
-            
-            // Actualizar indicadores combinados
-            this.updateCombinedIndicators(analysis.combined);
-            
-            // Actualizar confirmación de estrategia
-            this.updateStrategyConfirmation(analysis.combined, analysis.verdict);
-            
-        } catch (error) {
-            console.error('❌ Error actualizando UI:', error);
-            this.showError('Error en la interfaz');
-        }
+        this.safeUpdateElement('liquidityLevel', 'Analizando liquidez...');
+        this.safeUpdateElement('liquidityTrend', 'Calculando tendencia...');
+        this.safeUpdateElement('orderFlowDirection', 'Detectando flujo...');
+        this.safeUpdateElement('orderFlowStrength', 'Midiendo fuerza...');
+        this.safeUpdateElement('imbalanceStatus', 'Buscando imbalances...');
+        this.safeUpdateElement('volumeProfile', 'Creando perfil...');
+        this.safeUpdateElement('predictionDirection', 'CALCULANDO...');
+        this.safeUpdateElement('predictionProbability', 'Procesando...');
     }
 
     updateOrderFlowUI(orderFlowData) {
@@ -545,9 +527,10 @@ class TradingStrategyApp {
         const statusElement = document.getElementById('newsStatus');
         
         // Actualizar overview de noticias
-        if (newsData.recentNews && newsData.recentNews.length > 0) {
+        const newsOverview = document.getElementById('newsOverview');
+        if (newsOverview && newsData.recentNews && newsData.recentNews.length > 0) {
             const topNews = newsData.recentNews.slice(0, 3);
-            document.getElementById('newsOverview').innerHTML = `
+            newsOverview.innerHTML = `
                 <div style="font-size: 1.1rem; margin-bottom: 10px;">
                     <strong>Últimas ${topNews.length} noticias:</strong>
                 </div>
@@ -558,14 +541,15 @@ class TradingStrategyApp {
                     </div>
                 `).join('')}
             `;
-        } else {
-            document.getElementById('newsOverview').textContent = 'No hay noticias recientes';
+        } else if (newsOverview) {
+            newsOverview.textContent = 'No hay noticias recientes';
         }
         
         // Actualizar impacto del mercado
-        if (newsData.marketImpact) {
+        const marketImpact = document.getElementById('marketImpact');
+        if (marketImpact && newsData.marketImpact) {
             const impact = newsData.marketImpact;
-            document.getElementById('marketImpact').innerHTML = `
+            marketImpact.innerHTML = `
                 <div style="text-align: center; margin: 10px 0;">
                     <div style="font-weight: bold; color: ${this.getImpactColor(impact.level)};">
                         📊 Impacto: ${impact.level}
@@ -578,29 +562,34 @@ class TradingStrategyApp {
         }
         
         // Actualizar warnings
-        if (newsData.warnings && newsData.warnings.length > 0) {
-            document.getElementById('newsWarnings').innerHTML = `
-                <div style="margin-top: 10px;">
-                    <strong style="color: #ffa502;">⚠️ Alertas Activas:</strong>
-                    ${newsData.warnings.map(warning => `
-                        <div style="margin: 5px 0; padding: 8px; background: rgba(255, 165, 2, 0.1); border-left: 3px solid #ffa502; border-radius: 4px;">
-                            <div style="font-size: 0.9rem; color: #ffa502;">${warning.message}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            `;
-        } else {
-            document.getElementById('newsWarnings').innerHTML = `
-                <div style="text-align: center; color: #00ff88; margin-top: 10px;">
-                    ✅ No hay alertas activas
-                </div>
-            `;
+        const newsWarnings = document.getElementById('newsWarnings');
+        if (newsWarnings) {
+            if (newsData.warnings && newsData.warnings.length > 0) {
+                newsWarnings.innerHTML = `
+                    <div style="margin-top: 10px;">
+                        <strong style="color: #ffa502;">⚠️ Alertas Activas:</strong>
+                        ${newsData.warnings.map(warning => `
+                            <div style="margin: 5px 0; padding: 8px; background: rgba(255, 165, 2, 0.1); border-left: 3px solid #ffa502; border-radius: 4px;">
+                                <div style="font-size: 0.9rem; color: #ffa502;">${warning.message}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                newsWarnings.innerHTML = `
+                    <div style="text-align: center; color: #00ff88; margin-top: 10px;">
+                        ✅ No hay alertas activas
+                    </div>
+                `;
+            }
         }
         
         // Actualizar status
-        const dataSource = newsData.isReal ? '✅ REAL' : '⚠️ SIMULADO';
-        statusElement.innerHTML = `${dataSource} - Noticias`;
-        statusElement.className = `data-status ${newsData.isReal ? 'connected' : 'warning'}`;
+        if (statusElement) {
+            const dataSource = newsData.isReal ? '✅ REAL' : '⚠️ SIMULADO';
+            statusElement.innerHTML = `${dataSource} - Noticias`;
+            statusElement.className = `data-status ${newsData.isReal ? 'connected' : 'warning'}`;
+        }
     }
 
     showCriticalWarnings(warnings) {
@@ -635,42 +624,6 @@ class TradingStrategyApp {
         return colors[level] || '#888';
     }
 
-    getFallbackNewsData() {
-        console.log('🔄 Generando noticias de fallback locales...');
-        
-        // Generar noticias más realistas
-        const newsTemplates = [
-            {
-                title: `Análisis del mercado para ${this.currentTicker}: Consolidación esperada`,
-                time: 'Hace 2 horas',
-                impact: 'MEDIUM'
-            },
-            {
-                title: `Volumen de trading ${this.currentTicker} por encima del promedio`,
-                time: 'Hace 1 hora',
-                impact: 'LOW'
-            },
-            {
-                title: `Análisis técnico sugiere niveles clave para ${this.currentTicker}`,
-                time: 'Hace 45 minutos',
-                impact: 'LOW'
-            }
-        ];
-        
-        return {
-            recentNews: newsTemplates,
-            marketImpact: {
-                level: 'LOW',
-                description: 'Condiciones normales del mercado - Sin eventos significativos'
-            },
-            warnings: [], // Sin warnings para evitar alertas falsas
-            sentiment: 'NEUTRAL',
-            isReal: false,
-            timestamp: new Date().toISOString(),
-            source: 'local_fallback'
-        };
-    }
-
     getFallbackTradeRecommendation() {
         return {
             action: 'NO_TRADE',
@@ -684,6 +637,8 @@ class TradingStrategyApp {
     updateFinalVerdict(verdict) {
         const directionElement = document.getElementById('verdictDirection');
         const confidenceElement = document.getElementById('verdictConfidence');
+        
+        if (!directionElement || !confidenceElement) return;
         
         // Dirección
         directionElement.textContent = verdict.direction;
@@ -732,7 +687,9 @@ class TradingStrategyApp {
         
         // Actualizar color de la tarjeta según dirección
         const verdictCard = document.getElementById('finalVerdict');
-        verdictCard.className = `verdict-card ${verdict.direction.toLowerCase()}`;
+        if (verdictCard) {
+            verdictCard.className = `verdict-card ${verdict.direction.toLowerCase()}`;
+        }
         
         console.log(`🎯 UI actualizada: ${verdict.direction} (${confidence}% - ${isRealData ? 'REAL' : 'PROCESADO'})`);
     }
@@ -742,23 +699,27 @@ class TradingStrategyApp {
         
         if (oandaData && oandaData.price) {
             // Precio actual
-            document.getElementById('oandaPrice').textContent = `$${oandaData.price.mid.toFixed(4)}`;
+            this.safeUpdateElement('oandaPrice', `$${oandaData.price.mid.toFixed(4)}`);
             
             // Spread
-            document.getElementById('oandaSpread').textContent = `Spread: ${oandaData.price.spread.toFixed(2)} pips`;
+            this.safeUpdateElement('oandaSpread', `Spread: ${oandaData.price.spread.toFixed(2)} pips`);
             
             // Volumen
-            document.getElementById('oandaVolume').textContent = `Volumen: ${oandaData.price.volume.toLocaleString()}`;
+            this.safeUpdateElement('oandaVolume', `Volumen: ${oandaData.price.volume.toLocaleString()}`);
             
-            statusElement.textContent = '✅ Conectado';
-            statusElement.className = 'data-status connected';
+            if (statusElement) {
+                statusElement.textContent = '✅ Conectado';
+                statusElement.className = 'data-status connected';
+            }
         } else {
-            document.getElementById('oandaPrice').textContent = 'Sin conexión';
-            document.getElementById('oandaSpread').textContent = '--';
-            document.getElementById('oandaVolume').textContent = '--';
+            this.safeUpdateElement('oandaPrice', 'Sin conexión');
+            this.safeUpdateElement('oandaSpread', '--');
+            this.safeUpdateElement('oandaVolume', '--');
             
-            statusElement.textContent = '❌ Error de conexión';
-            statusElement.className = 'data-status error';
+            if (statusElement) {
+                statusElement.textContent = '❌ Error de conexión';
+                statusElement.className = 'data-status error';
+            }
         }
     }
 
@@ -771,10 +732,13 @@ class TradingStrategyApp {
             const timeframe = investingData.timeframe || '1D';
             
             // Overview con indicador de fuente y timeframe
-            document.getElementById('investingOverview').innerHTML = `
-                <strong>Recomendación: ${investingData.recommendation}</strong><br>
-                <small style="color: ${investingData.isReal ? '#00ff88' : '#ffa502'}">${dataSource} - ${investingData.confidence}% confianza (${timeframe})</small>
-            `;
+            const overviewElement = document.getElementById('investingOverview');
+            if (overviewElement) {
+                overviewElement.innerHTML = `
+                    <strong>Recomendación: ${investingData.recommendation}</strong><br>
+                    <small style="color: ${investingData.isReal ? '#00ff88' : '#ffa502'}">${dataSource} - ${investingData.confidence}% confianza (${timeframe})</small>
+                `;
+            }
             
             // Señales técnicas con detalles
             const signals = [];
@@ -785,51 +749,75 @@ class TradingStrategyApp {
                 signals.push(`OSC: ${investingData.oscillators.summary}`);
             }
             
-            document.getElementById('investingSignals').textContent = signals.join(' | ');
+            this.safeUpdateElement('investingSignals', signals.join(' | '));
             
-            statusElement.innerHTML = `${dataSource} - Investing.com (${timeframe})`;
-            statusElement.className = `data-status ${investingData.isReal ? 'connected' : 'warning'}`;
+            if (statusElement) {
+                statusElement.innerHTML = `${dataSource} - Investing.com (${timeframe})`;
+                statusElement.className = `data-status ${investingData.isReal ? 'connected' : 'warning'}`;
+            }
         } else {
-            document.getElementById('investingOverview').textContent = 'Error al obtener datos';
-            document.getElementById('investingSignals').textContent = '--';
+            this.safeUpdateElement('investingOverview', 'Error al obtener datos');
+            this.safeUpdateElement('investingSignals', '--');
             
-            statusElement.textContent = '❌ Error de scraping';
-            statusElement.className = 'data-status error';
+            if (statusElement) {
+                statusElement.textContent = '❌ Error de scraping';
+                statusElement.className = 'data-status error';
+            }
         }
     }
 
     updateCombinedIndicators(combinedData) {
         // Tendencia
-        document.getElementById('trendScore').innerHTML = `Tendencia: <span class="${this.getScoreClass(combinedData.trendScore)}">${combinedData.trendScore}</span>`;
+        const trendElement = document.getElementById('trendScore');
+        if (trendElement) {
+            trendElement.innerHTML = `Tendencia: <span class="${this.getScoreClass(combinedData.trendScore)}">${combinedData.trendScore}</span>`;
+        }
         
         // Momentum
-        document.getElementById('momentumScore').innerHTML = `Momentum: <span class="${this.getScoreClass(combinedData.momentumScore)}">${combinedData.momentumScore}</span>`;
+        const momentumElement = document.getElementById('momentumScore');
+        if (momentumElement) {
+            momentumElement.innerHTML = `Momentum: <span class="${this.getScoreClass(combinedData.momentumScore)}">${combinedData.momentumScore}</span>`;
+        }
         
         // Volumen
-        document.getElementById('volumeScore').innerHTML = `Volumen: <span class="${this.getVolumeClass(combinedData.volumeScore)}">${combinedData.volumeScore}</span>`;
+        const volumeElement = document.getElementById('volumeScore');
+        if (volumeElement) {
+            volumeElement.innerHTML = `Volumen: <span class="${this.getVolumeClass(combinedData.volumeScore)}">${combinedData.volumeScore}</span>`;
+        }
         
         // Soporte/Resistencia
-        document.getElementById('supportResistance').innerHTML = `S/R: ${combinedData.supportResistance.support} / ${combinedData.supportResistance.resistance}`;
+        const srElement = document.getElementById('supportResistance');
+        if (srElement) {
+            srElement.innerHTML = `S/R: ${combinedData.supportResistance.support} / ${combinedData.supportResistance.resistance}`;
+        }
     }
 
     updateStrategyConfirmation(combinedData, verdict) {
         // Puntos de estrategia
-        document.getElementById('bullishPoints').textContent = `Bullish: ${combinedData.bullishPoints.toFixed(1)} puntos`;
-        document.getElementById('bearishPoints').textContent = `Bearish: ${combinedData.bearishPoints.toFixed(1)} puntos`;
-        document.getElementById('neutralPoints').textContent = `Neutral: ${combinedData.neutralPoints.toFixed(1)} puntos`;
+        this.safeUpdateElement('bullishPoints', `Bullish: ${combinedData.bullishPoints.toFixed(1)} puntos`);
+        this.safeUpdateElement('bearishPoints', `Bearish: ${combinedData.bearishPoints.toFixed(1)} puntos`);
+        this.safeUpdateElement('neutralPoints', `Neutral: ${combinedData.neutralPoints.toFixed(1)} puntos`);
         
         // Nivel de riesgo
         const riskElement = document.getElementById('riskLevel');
-        riskElement.textContent = `Nivel de Riesgo: ${verdict.riskLevel}`;
-        riskElement.className = `risk-${verdict.riskLevel.toLowerCase().replace(' ', '-')}`;
+        if (riskElement) {
+            riskElement.textContent = `Nivel de Riesgo: ${verdict.riskLevel}`;
+            riskElement.className = `risk-${verdict.riskLevel.toLowerCase().replace(' ', '-')}`;
+        }
     }
 
     updateLiquidityData(liquidityData) {
-        document.getElementById('liquidityLevel').textContent = liquidityData.level;
-        document.getElementById('liquidityLevel').className = this.getLiquidityClass(liquidityData.level);
+        const liquidityLevel = document.getElementById('liquidityLevel');
+        if (liquidityLevel) {
+            liquidityLevel.textContent = liquidityData.level;
+            liquidityLevel.className = this.getLiquidityClass(liquidityData.level);
+        }
         
-        document.getElementById('liquidityTrend').textContent = liquidityData.trend;
-        document.getElementById('liquidityTrend').className = this.getTrendClass(liquidityData.trend);
+        const liquidityTrend = document.getElementById('liquidityTrend');
+        if (liquidityTrend) {
+            liquidityTrend.textContent = liquidityData.trend;
+            liquidityTrend.className = this.getTrendClass(liquidityData.trend);
+        }
         
         // Actualizar barras de liquidez
         const bidPercentage = (liquidityData.totalBidVolume / (liquidityData.totalBidVolume + liquidityData.totalAskVolume)) * 100;
@@ -843,10 +831,13 @@ class TradingStrategyApp {
     }
 
     updateOrderFlowData(orderFlowData) {
-        document.getElementById('orderFlowDirection').textContent = orderFlowData.direction;
-        document.getElementById('orderFlowDirection').className = this.getFlowDirectionClass(orderFlowData.direction);
+        const flowDirection = document.getElementById('orderFlowDirection');
+        if (flowDirection) {
+            flowDirection.textContent = orderFlowData.direction;
+            flowDirection.className = this.getFlowDirectionClass(orderFlowData.direction);
+        }
         
-        document.getElementById('orderFlowStrength').textContent = `Fuerza: ${orderFlowData.strength}`;
+        this.safeUpdateElement('orderFlowStrength', `Fuerza: ${orderFlowData.strength}`);
         
         // Actualizar indicadores de flujo
         const buyFlow = document.getElementById('buyFlow');
@@ -864,33 +855,42 @@ class TradingStrategyApp {
     }
 
     updateImbalanceData(imbalanceData) {
-        document.getElementById('imbalanceStatus').textContent = imbalanceData.detected ? 
-            `${imbalanceData.count} Imbalances Detectados` : 'No Detectados';
-        document.getElementById('imbalanceStatus').className = imbalanceData.detected ? 'detected' : 'no-detected';
+        const imbalanceStatus = document.getElementById('imbalanceStatus');
+        if (imbalanceStatus) {
+            imbalanceStatus.textContent = imbalanceData.detected ? 
+                `${imbalanceData.count} Imbalances Detectados` : 'No Detectados';
+            imbalanceStatus.className = imbalanceData.detected ? 'detected' : 'no-detected';
+        }
         
-        document.getElementById('nextLevel').textContent = imbalanceData.nextLevel;
-        document.getElementById('criticalZone').textContent = imbalanceData.criticalZone;
+        this.safeUpdateElement('nextLevel', imbalanceData.nextLevel);
+        this.safeUpdateElement('criticalZone', imbalanceData.criticalZone);
     }
 
     updateVolumeProfileData(volumeProfileData) {
-        document.getElementById('volumeProfile').textContent = `POC: ${volumeProfileData.pocPrice}`;
-        document.getElementById('pocLevel').textContent = volumeProfileData.pocPrice;
-        document.getElementById('vpocStrength').textContent = `${volumeProfileData.vpocStrength} (${volumeProfileData.vpocPercentage}%)`;
+        this.safeUpdateElement('volumeProfile', `POC: ${volumeProfileData.pocPrice}`);
+        this.safeUpdateElement('pocLevel', volumeProfileData.pocPrice);
+        this.safeUpdateElement('vpocStrength', `${volumeProfileData.vpocStrength} (${volumeProfileData.vpocPercentage}%)`);
     }
 
     updatePredictionData(predictionData) {
-        document.getElementById('predictionDirection').textContent = predictionData.direction;
-        document.getElementById('predictionDirection').className = this.getPredictionDirectionClass(predictionData.direction);
+        const predictionDirection = document.getElementById('predictionDirection');
+        if (predictionDirection) {
+            predictionDirection.textContent = predictionData.direction;
+            predictionDirection.className = this.getPredictionDirectionClass(predictionData.direction);
+        }
         
-        document.getElementById('predictionProbability').textContent = `${predictionData.probability}% Probabilidad`;
-        document.getElementById('predictionProbability').className = this.getProbabilityClass(predictionData.probability);
+        const predictionProbability = document.getElementById('predictionProbability');
+        if (predictionProbability) {
+            predictionProbability.textContent = `${predictionData.probability}% Probabilidad`;
+            predictionProbability.className = this.getProbabilityClass(predictionData.probability);
+        }
         
-        document.getElementById('targetPrice').textContent = predictionData.targetPrice;
-        document.getElementById('estimatedTime').textContent = predictionData.estimatedTime;
-        document.getElementById('stopLevel').textContent = predictionData.stopLevel;
+        this.safeUpdateElement('targetPrice', predictionData.targetPrice);
+        this.safeUpdateElement('estimatedTime', predictionData.estimatedTime);
+        this.safeUpdateElement('stopLevel', predictionData.stopLevel);
     }
 
-    // Métodos para clases CSS que faltaban
+    // Métodos para clases CSS
     getScoreClass(score) {
         if (typeof score !== 'string') return 'neutral';
         
@@ -972,6 +972,8 @@ class TradingStrategyApp {
 
     updateHistoryDisplay() {
         const historyContainer = document.getElementById('recentAnalysis');
+        if (!historyContainer) return;
+        
         const history = this.strategyEngine.analysisHistory.slice(0, 5);
         
         if (history.length === 0) {
@@ -1050,15 +1052,9 @@ class TradingStrategyApp {
     }
 
     showError(message) {
-        document.getElementById('verdictDirection').textContent = message;
-        document.getElementById('verdictDirection').className = 'error';
-        
-        document.getElementById('verdictConfidence').textContent = 'Error en análisis';
-        document.getElementById('verdictConfidence').className = 'error';
-        
-        // Mostrar error en Order Flow también
-        document.getElementById('predictionDirection').textContent = 'ERROR';
-        document.getElementById('predictionDirection').className = 'error';
+        this.safeUpdateElement('verdictDirection', message, 'error');
+        this.safeUpdateElement('verdictConfidence', 'Error en análisis', 'error');
+        this.safeUpdateElement('predictionDirection', 'ERROR', 'error');
     }
 
     updateTradeRecommendationUI(recommendation) {
@@ -1067,7 +1063,7 @@ class TradingStrategyApp {
         const container = document.getElementById('tradeRecommendation');
         if (!container) return;
         
-        if (recommendation.action === 'TRADE_RECOMMENDED') {
+        if (recommendation && recommendation.action === 'TRADE_RECOMMENDED') {
             container.innerHTML = `
                 <div class="trade-recommendation-header ${recommendation.direction.toLowerCase()}">
                     <h4>🎯 TRADE RECOMENDADO (15min)</h4>
@@ -1134,24 +1130,24 @@ class TradingStrategyApp {
             container.innerHTML = `
                 <div class="trade-recommendation-header no-trade">
                     <h4>🚫 NO OPERAR</h4>
-                    <div class="trade-confidence">${recommendation.confidence || 0}% Confianza</div>
+                    <div class="trade-confidence">${recommendation?.confidence || 0}% Confianza</div>
                 </div>
                 
                 <div class="no-trade-details">
                     <div class="no-trade-reason">
                         <span class="label">Razón:</span>
-                        <span class="value">${recommendation.reason}</span>
+                        <span class="value">${recommendation?.reason || 'No determinada'}</span>
                     </div>
                     <div class="no-trade-recommendation">
                         <span class="label">Recomendación:</span>
-                        <span class="value">${recommendation.recommendation}</span>
+                        <span class="value">${recommendation?.recommendation || 'Esperar mejores condiciones'}</span>
                     </div>
                     <div class="no-trade-next">
                         <span class="label">Próxima revisión:</span>
-                        <span class="value">${recommendation.nextCheck}</span>
+                        <span class="value">${recommendation?.nextCheck || '15 minutos'}</span>
                     </div>
                     
-                    ${recommendation.newsAlert ? `
+                    ${recommendation?.newsAlert ? `
                         <div class="news-alert">
                             <div class="alert-icon">📰</div>
                             <div class="alert-text">${recommendation.newsAlert}</div>
@@ -1226,7 +1222,7 @@ window.addEventListener('error', (e) => {
     console.error('Error global:', e.error);
 });
 
-// Cleanup al cerrar la página (ya no hay auto-refresh que limpiar)
+// Cleanup al cerrar la página
 window.addEventListener('beforeunload', () => {
     console.log('🔄 Cerrando aplicación...');
 });

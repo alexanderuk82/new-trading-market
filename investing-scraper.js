@@ -16,7 +16,7 @@ class InvestingScraper {
         }
     }
 
-    async getTechnicalAnalysis(ticker, timeframe = '15m') {
+    async getTechnicalAnalysis(ticker, timeframe = '1H') {
         try {
             console.log(`📊 Obteniendo análisis técnico REAL para ${ticker} (${timeframe})...`);
             
@@ -66,7 +66,7 @@ class InvestingScraper {
         }
     }
 
-    getFallbackTechnicalData(timeframe = '15m') {
+    getFallbackTechnicalData(timeframe = '1H') {
         console.log('🔄 Usando datos técnicos SIMULADOS (' + timeframe + ')');
         
         // Generar datos técnicos simulados realistas
