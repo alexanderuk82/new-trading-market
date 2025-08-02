@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Strategy Confirmation</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎯 Strategy Confirmation Live</h1>
+            <div class="ticker-input">
+                <input type="text" id="tickerInput" placeholder="Ingresa ticker" value="XAUUSD">
+                <button id="analyzeBtn">Confirmar Estrategia</button>
+            </div>
+            
+            <!-- Botones rápidos para tus pares favoritos -->
+            <div class="quick-pairs">
+                <button class="pair-btn" data-pair="EURUSD">🇪🇺 EUR/USD</button>
+                <button class="pair-btn" data-pair="AUDUSD">🇦🇺 AUD/USD</button>
+                <button class="pair-btn" data-pair="XAUUSD">🥇 XAU/USD</button>
+                <button class="pair-btn" data-pair="USDJPY">🇺🇸 USD/JPY</button>
+                <button class="pair-btn" data-pair="USDCHF">🇺🇸 USD/CHF</button>
+                <button class="pair-btn" data-pair="EURJPY">🇪🇺 EUR/JPY</button>
+                <button class="pair-btn" data-pair="AUDJPY">🇦🇺 AUD/JPY</button>
+                <button class="pair-btn" data-pair="GBPUSD">🇬🇧 GBP/USD</button>
+                <button class="pair-btn" data-pair="GBPCAD">🇬🇧 GBP/CAD</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Resultado Final Principal -->
+            <div class="final-verdict">
+                <div class="verdict-card" id="finalVerdict">
+                    <h2>🔍 Análisis Final</h2>
+                    <div id="verdictDirection">--</div>
+                    <div id="verdictConfidence">--</div>
+                    <div id="verdictTimeframe">15min Timeframe</div>
+                </div>
+            </div>
+
+            <!-- Grid de Análisis -->
+            <div class="analysis-grid">
+                <!-- NUEVA SECCIÓN: Trade Recommendation -->
+                <div class="card trade-recommendation-card">
+                    <h3>🎯 Recomendación de Trade (15min)</h3>
+                    <div id="tradeRecommendation">
+                        <div class="waiting-analysis">
+                            Esperando análisis completo...
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Datos de OANDA -->
+                <div class="card oanda-card">
+                    <h3>🏦 OANDA Live</h3>
+                    <div id="oandaPrice">--</div>
+                    <div id="oandaSpread">--</div>
+                    <div id="oandaVolume">--</div>
+                    <div id="oandaStatus" class="data-status">Desconectado</div>
+                </div>
+
+                <!-- Datos de Investing.com -->
+                <div class="card investing-card">
+                    <h3>📊 Investing.com</h3>
+                    <div id="investingOverview">--</div>
+                    <div id="investingSignals">--</div>
+                    <div id="investingStatus" class="data-status">Desconectado</div>
+                </div>
+
+                <!-- Noticias y Alertas -->
+                <div class="card news-card">
+                    <h3>📰 Noticias & Alertas</h3>
+                    <div id="newsOverview">--</div>
+                    <div id="marketImpact">--</div>
+                    <div id="newsWarnings">--</div>
+                    <div id="newsStatus" class="data-status">Sin datos</div>
+                </div>
+
+                <!-- Indicadores Combinados -->
+                <div class="card indicators-card">
+                    <h3>🔄 Indicadores Combinados</h3>
+                    <div class="indicator-list">
+                        <div id="trendScore" class="indicator">--</div>
+                        <div id="momentumScore" class="indicator">--</div>
+                        <div id="volumeScore" class="indicator">--</div>
+                        <div id="supportResistance" class="indicator">--</div>
+                    </div>
+                </div>
+
+                <!-- Confirmación de Estrategia -->
+                <div class="card confirmation-card">
+                    <h3>✅ Confirmación de Estrategia</h3>
+                    <div id="strategyPoints">
+                        <div id="bullishPoints" class="point bullish">--</div>
+                        <div id="bearishPoints" class="point bearish">--</div>
+                        <div id="neutralPoints" class="point neutral">--</div>
+                    </div>
+                    <div id="riskLevel">--</div>
+                </div>
+            </div>
+
+            <!-- NUEVA SECCIÓN: Order Flow & Liquidez -->
+            <div class="orderflow-section">
+                <h2>💧 Order Flow & Análisis de Liquidez</h2>
+                <div class="orderflow-grid">
+                    <!-- Liquidez Actual -->
+                    <div class="card liquidity-card">
+                        <h3>💰 Liquidez del Mercado</h3>
+                        <div id="liquidityLevel">--</div>
+                        <div id="liquidityTrend">--</div>
+                        <div class="liquidity-bars" id="liquidityBars">
+                            <div class="bar bid-bar">
+                                <span>BID</span>
+                                <div class="bar-fill" id="bidBar"></div>
+                            </div>
+                            <div class="bar ask-bar">
+                                <span>ASK</span>
+                                <div class="bar-fill" id="askBar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Flow -->
+                    <div class="card orderflow-card">
+                        <h3>🌊 Order Flow</h3>
+                        <div id="orderFlowDirection">--</div>
+                        <div id="orderFlowStrength">--</div>
+                        <div class="flow-indicator">
+                            <div class="flow-arrow buy-flow" id="buyFlow">
+                                <span>📈 COMPRA</span>
+                                <div class="arrow-fill"></div>
+                            </div>
+                            <div class="flow-arrow sell-flow" id="sellFlow">
+                                <span>📉 VENTA</span>
+                                <div class="arrow-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Imbalances -->
+                    <div class="card imbalance-card">
+                        <h3>⚖️ Imbalances</h3>
+                        <div id="imbalanceStatus">--</div>
+                        <div class="imbalance-list">
+                            <div class="imbalance-item">
+                                <span>Próximo Nivel:</span>
+                                <span id="nextLevel">--</span>
+                            </div>
+                            <div class="imbalance-item">
+                                <span>Zona Crítica:</span>
+                                <span id="criticalZone">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Perfil de Volumen -->
+                    <div class="card volume-profile-card">
+                        <h3>📊 Perfil de Volumen</h3>
+                        <div id="volumeProfile">--</div>
+                        <div class="volume-levels">
+                            <div class="level-item">
+                                <span>POC:</span>
+                                <span id="pocLevel">--</span>
+                            </div>
+                            <div class="level-item">
+                                <span>VPOC:</span>
+                                <span id="vpocStrength">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Predicción de Movimiento -->
+                <div class="prediction-section">
+                    <div class="card prediction-card">
+                        <h3>🔮 Predicción de Movimiento (Próximos 15min)</h3>
+                        <div class="prediction-content">
+                            <div class="prediction-main">
+                                <div id="predictionDirection">--</div>
+                                <div id="predictionProbability">--</div>
+                            </div>
+                            <div class="prediction-details">
+                                <div class="prediction-item">
+                                    <span>🎯 Precio Objetivo:</span>
+                                    <span id="targetPrice">--</span>
+                                </div>
+                                <div class="prediction-item">
+                                    <span>⏱️ Tiempo Estimado:</span>
+                                    <span id="estimatedTime">--</span>
+                                </div>
+                                <div class="prediction-item">
+                                    <span>🛑 Stop Level:</span>
+                                    <span id="stopLevel">--</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Acciones -->
+            <div class="actions-section">
+                <h3>🎛️ Acciones</h3>
+                <div class="action-buttons">
+                    <button id="saveAnalysis" class="action-btn">💾 Guardar Análisis</button>
+                    <button id="exportData" class="action-btn">📤 Exportar Datos</button>
+                    <button id="clearHistory" class="action-btn">🗑️ Limpiar Historial</button>
+                </div>
+            </div>
+
+            <!-- Historial Compacto -->
+            <div class="history-compact">
+                <h3>📋 Historial Reciente</h3>
+                <div id="recentAnalysis">
+                    <!-- Los análisis recientes aparecerán aquí -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts en el ORDEN CORRECTO - CRÍTICO -->
+    <script src="convertToOandaFormat.js"></script>
+    <script src="oanda-api.js"></script>
+    <script src="investing-scraper.js"></script>
+    <script src="orderflow-analyzer.js"></script>
+    <script src="strategy-engine.js"></script>
+    <script src="trade-recommender.js"></script>
+    <script src="script.js"></script>
+    
+    <!-- Script de debugging para verificar carga -->
+    <script>
+        console.log('🔍 Verificando carga de scripts...');
+        setTimeout(() => {
+            console.log('📋 Estado final de scripts:', {
+                convertToOandaFormat: typeof window.convertToOandaFormat,
+                OandaAPI: typeof window.OandaAPI,
+                InvestingScraper: typeof window.InvestingScraper,
+                OrderFlowAnalyzer: typeof window.OrderFlowAnalyzer,
+                StrategyEngine: typeof window.StrategyEngine,
+                TradeRecommender: typeof window.TradeRecommender
+            });
+        }, 500);
+    </script>
+</body>
+</html>
