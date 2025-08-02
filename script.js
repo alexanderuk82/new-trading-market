@@ -689,34 +689,52 @@ class TradingStrategyApp {
         directionElement.textContent = verdict.direction;
         directionElement.className = verdict.direction.toLowerCase();
         
-        // MOSTRAR CLARAMENTE SI ES BASADO EN DATOS REALES
-        const realInvestingConfidence = this.currentAnalysis?.investing?.confidence || 0;
-        const isRealData = this.currentAnalysis?.investing?.isReal || false;
+        // MEJORAR UI PARA MOSTRAR RECOMENDACIÓN CLARA
+        const investingData = this.currentAnalysis?.investing;
+        const isRealData = investingData?.isReal;
+        const confidence = investingData?.confidence || verdict.confidence;
         
-        if (isRealData && realInvestingConfidence > 0) {
-            confidenceElement.innerHTML = `
-                <div style="font-size: 1.8rem; color: #00ff88;">${realInvestingConfidence}% Confianza</div>
-                <div style="font-size: 1rem; color: #888;">
-                    📊 Basado en datos REALES de investing.com
-                </div>
-            `;
+        // Crear resumen de recomendación profesional
+        let recommendationText = '';
+        if (verdict.direction === 'BULLISH') {
+            recommendationText = `📈 RECOMENDACIÓN: COMPRA FUERTE`;
+        } else if (verdict.direction === 'BEARISH') {
+            recommendationText = `📉 RECOMENDACIÓN: VENTA FUERTE`;
         } else {
-            confidenceElement.innerHTML = `
-                <div style="font-size: 1.8rem; color: #ffa502;">${verdict.confidence}% Confianza</div>
-                <div style="font-size: 1rem; color: #888;">
-                    ⚠️ Basado en datos simulados
-                </div>
-            `;
+            recommendationText = `⚖️ RECOMENDACIÓN: MANTENERSE NEUTRAL`;
         }
         
-        confidenceElement.className = (isRealData ? realInvestingConfidence : verdict.confidence) >= 70 ? 'high-confidence' : 
-                                    (isRealData ? realInvestingConfidence : verdict.confidence) >= 50 ? 'medium-confidence' : 'low-confidence';
+        // Determinar fuente de datos
+        let dataSourceText = '';
+        if (isRealData) {
+            dataSourceText = `✅ Análisis basado en datos REALES de Investing.com`;
+        } else {
+            dataSourceText = `⚠️ Análisis basado en datos técnicos procesados`;
+        }
+        
+        confidenceElement.innerHTML = `
+            <div style="font-size: 1.8rem; color: ${isRealData ? '#00ff88' : '#ffa502'}; font-weight: bold;">
+                ${confidence}% CONFIANZA
+            </div>
+            <div style="font-size: 1.2rem; color: #ffffff; margin: 8px 0; font-weight: 600;">
+                ${recommendationText}
+            </div>
+            <div style="font-size: 0.9rem; color: #ccc; margin-top: 5px;">
+                ${dataSourceText}
+            </div>
+            <div style="font-size: 0.8rem; color: #888; margin-top: 3px;">
+                Timeframe: 15 minutos • ${new Date().toLocaleTimeString()}
+            </div>
+        `;
+        
+        confidenceElement.className = confidence >= 70 ? 'high-confidence' : 
+                                    confidence >= 50 ? 'medium-confidence' : 'low-confidence';
         
         // Actualizar color de la tarjeta según dirección
         const verdictCard = document.getElementById('finalVerdict');
         verdictCard.className = `verdict-card ${verdict.direction.toLowerCase()}`;
         
-        console.log(`🎯 UI actualizada: ${verdict.direction} (${isRealData ? realInvestingConfidence : verdict.confidence}% - ${isRealData ? 'REAL' : 'SIMULADO'})`);
+        console.log(`🎯 UI actualizada: ${verdict.direction} (${confidence}% - ${isRealData ? 'REAL' : 'PROCESADO'})`);
     }
 
     updateOandaData(oandaData) {
