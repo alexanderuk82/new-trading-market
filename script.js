@@ -979,15 +979,41 @@ class TradingStrategyApp {
             return;
         }
         
-        historyContainer.innerHTML = history.map(item => `
-            <div class="history-item">
-                <div><strong>${item.verdict?.direction || 'N/A'}</strong> - ${item.verdict?.confidence || 0}% confianza</div>
-                <div>Recomendación: ${item.verdict?.recommendation || 'N/A'}</div>
-                <div>Order Flow: ${item.orderFlow?.prediction?.direction || 'N/A'} (${item.orderFlow?.prediction?.probability || 0}%)</div>
-                <div>Noticias: ${item.news?.warnings?.length || 0} alertas detectadas</div>
-                <div class="timestamp">${new Date(item.timestamp).toLocaleString()}</div>
-            </div>
-        `).join('');
+        historyContainer.innerHTML = history.map(item => {
+            // Extraer el mercado/ticker del análisis
+            const marketCode = item.investing?.ticker || 
+                              item.oanda?.price?.instrument?.replace('_', '') || 
+                              item.verdict?.ticker || 
+                              'N/A';
+            
+            // Formatear el mercado con emoji apropiado
+            let marketDisplay = marketCode;
+            const marketEmojis = {
+                'XAUUSD': '🥇 XAU/USD',
+                'EURUSD': '🇪🇺 EUR/USD', 
+                'AUDUSD': '🇦🇺 AUD/USD',
+                'USDJPY': '🇺🇸 USD/JPY',
+                'GBPUSD': '🇬🇧 GBP/USD',
+                'USDCHF': '🇺🇸 USD/CHF',
+                'EURJPY': '🇪🇺 EUR/JPY',
+                'AUDJPY': '🇦🇺 AUD/JPY',
+                'GBPCAD': '🇬🇧 GBP/CAD'
+            };
+            marketDisplay = marketEmojis[marketCode] || `📈 ${marketCode}`;
+            
+            return `
+                <div class="history-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <div><strong>${item.verdict?.direction || 'N/A'}</strong> - ${item.verdict?.confidence || 0}% confianza</div>
+                        <div style="font-size: 0.9rem; color: #00d4aa; font-weight: bold;">${marketDisplay}</div>
+                    </div>
+                    <div>Recomendación: ${item.verdict?.recommendation || 'N/A'}</div>
+                    <div>Order Flow: ${item.orderFlow?.prediction?.direction || 'N/A'} (${item.orderFlow?.prediction?.probability || 0}%)</div>
+                    <div>Noticias: ${item.news?.warnings?.length || 0} alertas detectadas</div>
+                    <div class="timestamp">${new Date(item.timestamp).toLocaleString()}</div>
+                </div>
+            `;
+        }).join('');
     }
 
     showNotification(message, type = 'success') {
