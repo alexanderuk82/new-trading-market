@@ -1,3 +1,5 @@
+const Parser = require('rss-parser');
+const parser = new Parser();
 const express = require('express');
 const cors = require('cors');
 const puppeteer = require('puppeteer');
@@ -311,122 +313,442 @@ async function attemptRealScraping(ticker, timeframe) {
     }
 }
 
-// Función SIMPLIFICADA para noticias que realmente funcione
+// FUNCIÓN COMPLETAMENTE NUEVA - NOTICIAS REALES VÍA RSS
 async function attemptRealNewsScraping(ticker) {
-    console.log(`🔍 Intentando scraping de noticias SIMPLE para ${ticker}...`);
+    console.log(`🔍 Obteniendo noticias REALES vía RSS para ${ticker}...`);
     
     try {
-        const browser = await initBrowser();
-        const page = await browser.newPage();
+        // URLs RSS REALES que funcionan sin bloqueo
+        const rssFeeds = {
+            'EURUSD': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=EURUSD=X&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_1.rss', // Forex
+                'https://www.forexfactory.com/rss/news.xml'
+            ],
+            'AUDUSD': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=AUDUSD=X&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_1.rss',
+                'https://www.marketwatch.com/rss/topstories'
+            ],
+            'XAUUSD': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=GC=F&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_25.rss', // Commodities
+                'https://www.marketwatch.com/rss/topstories'
+            ],
+            'USDJPY': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=USDJPY=X&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_1.rss',
+                'https://www.forexfactory.com/rss/news.xml'
+            ],
+            'USDCHF': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=USDCHF=X&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_1.rss',
+                'https://www.marketwatch.com/rss/topstories'
+            ],
+            'EURJPY': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=EURJPY=X&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_1.rss',
+                'https://www.forexfactory.com/rss/news.xml'
+            ],
+            'AUDJPY': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=AUDJPY=X&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_1.rss',
+                'https://www.marketwatch.com/rss/topstories'
+            ],
+            'GBPUSD': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=GBPUSD=X&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_1.rss',
+                'https://www.forexfactory.com/rss/news.xml'
+            ],
+            'GBPCAD': [
+                'https://feeds.finance.yahoo.com/rss/2.0/headline?s=GBPCAD=X&region=US&lang=en-US',
+                'https://www.investing.com/rss/news_1.rss',
+                'https://www.marketwatch.com/rss/topstories'
+            ]
+        };
         
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+        const feeds = rssFeeds[ticker] || rssFeeds['XAUUSD'];
+        const keywords = getTickerKeywords(ticker);
         
-        // URL más simple que siempre funciona
-        const newsUrl = `https://finance.yahoo.com/news/`;
+        console.log(`📡 Procesando ${feeds.length} feeds RSS para ${ticker}...`);
         
-        console.log(`🌐 Navegando a Yahoo Finance News...`);
-        await page.goto(newsUrl, { 
-            waitUntil: 'domcontentloaded', 
-            timeout: 15000 
-        });
+        let allNews = [];
         
-        await page.waitForTimeout(2000);
-        
-        // Extraer noticias de forma muy simple
-        const newsData = await page.evaluate((searchTicker) => {
+        // Procesar cada feed RSS
+        for (let i = 0; i < feeds.length; i++) {
             try {
-                const articles = [];
+                console.log(`📰 Feed ${i + 1}/${feeds.length}: ${feeds[i]}`);
                 
-                // Buscar cualquier elemento que parezca noticia
-                const allLinks = document.querySelectorAll('a, h1, h2, h3, h4');
-                let foundCount = 0;
+                const feed = await parser.parseURL(feeds[i]);
                 
-                allLinks.forEach(element => {
-                    if (foundCount >= 5) return;
-                    
-                    const text = element.textContent?.trim();
-                    if (text && text.length > 30 && text.length < 150) {
-                        // Filtrar por términos financieros
-                        const financialTerms = ['market', 'stock', 'trading', 'dollar', 'yen', 'euro', 'gold', 'forex', 'currency', 'price', 'economy', 'financial', 'investment'];
-                        const hasFinancialContent = financialTerms.some(term => 
-                            text.toLowerCase().includes(term)
-                        );
-                        
-                        if (hasFinancialContent) {
-                            let impact = 'LOW';
-                            const textLower = text.toLowerCase();
-                            
-                            if (textLower.includes('surge') || textLower.includes('crash') || 
-                                textLower.includes('soar') || textLower.includes('plunge')) {
-                                impact = 'HIGH';
-                            } else if (textLower.includes('rise') || textLower.includes('fall') || 
-                                      textLower.includes('gain') || textLower.includes('drop')) {
-                                impact = 'MEDIUM';
-                            }
-                            
-                            articles.push({
-                                title: text,
-                                time: `Hace ${foundCount + 1} hora${foundCount > 0 ? 's' : ''}`,
-                                impact: impact,
-                                url: element.href || '#'
-                            });
-                            
-                            foundCount++;
-                        }
-                    }
-                });
+                console.log(`✅ Feed cargado: ${feed.title} (${feed.items.length} items)`);
                 
-                // Si no encontramos suficientes, generar algunas genéricas
-                while (articles.length < 3) {
-                    articles.push({
-                        title: `Análisis del mercado financiero - Actualización ${articles.length + 1}`,
-                        time: `Hace ${articles.length + 1} horas`,
-                        impact: 'LOW',
-                        url: '#'
-                    });
-                }
+                // Filtrar noticias relevantes
+                const relevantNews = feed.items
+                    .filter(item => isRelevantNews(item, keywords, ticker))
+                    .slice(0, 5) // Max 5 por feed
+                    .map(item => ({
+                        title: item.title,
+                        time: formatNewsTime(item.pubDate),
+                        impact: determineRealNewsImpact(item.title, item.content || item.contentSnippet || ''),
+                        url: item.link,
+                        source: extractSource(feeds[i]),
+                        pubDate: item.pubDate,
+                        content: item.contentSnippet || ''
+                    }));
                 
-                console.log(`📰 Noticias encontradas: ${articles.length}`);
+                allNews = allNews.concat(relevantNews);
+                console.log(`📊 ${relevantNews.length} noticias relevantes encontradas en este feed`);
                 
-                return {
-                    recentNews: articles,
-                    marketImpact: {
-                        level: articles.some(a => a.impact === 'HIGH') ? 'HIGH' : 
-                               articles.some(a => a.impact === 'MEDIUM') ? 'MEDIUM' : 'LOW',
-                        description: `${articles.length} noticias financieras recientes`
-                    },
-                    warnings: [],
-                    sentiment: 'NEUTRAL',
-                    isReal: articles.length >= 3
-                };
-            } catch (error) {
-                console.error('❌ Error extrayendo noticias:', error);
-                return { isReal: false, recentNews: [] };
+            } catch (feedError) {
+                console.warn(`⚠️ Error en feed ${feeds[i]}:`, feedError.message);
+                continue;
             }
-        }, ticker);
-        
-        await page.close();
-        
-        if (newsData && newsData.recentNews && newsData.recentNews.length >= 3) {
-            console.log(`✅ Scraping de noticias REAL exitoso para ${ticker} - ${newsData.recentNews.length} noticias`);
-            return {
-                success: true,
-                data: {
-                    ticker: ticker,
-                    timestamp: new Date().toISOString(),
-                    source: 'yahoo_finance_real',
-                    ...newsData
-                }
-            };
-        } else {
-            console.warn(`⚠️ Solo se encontraron ${newsData?.recentNews?.length || 0} noticias`);
-            return { success: false, reason: 'Pocas noticias encontradas' };
         }
         
+        if (allNews.length === 0) {
+            console.warn(`❌ No se encontraron noticias para ${ticker} en ningún feed`);
+            return { success: false, reason: 'No news found in RSS feeds' };
+        }
+        
+        // Ordenar por fecha y tomar las más recientes
+         if (allNews.length === 0) {
+            console.warn(`❌ No se encontraron noticias para ${ticker} en ningún feed`);
+            return { success: false, reason: 'No news found in RSS feeds' };
+        }
+        // OBTENER LAS 3 NOTICIAS MÁS RELEVANTES E IMPORTANTES
+        const topNews = getTop3MostRelevantNews(allNews, keywords, ticker);
+
+        if (topNews.length === 0) {
+            console.warn(`❌ No se encontraron noticias relevantes para ${ticker}`);
+            return { success: false, reason: 'No relevant news found' };
+        }
+        
+        // Calcular impacto real
+        const impactAnalysis = calculateRealNewsImpact(topNews, ticker);
+        
+        console.log(`✅ ${topNews.length} noticias REALES obtenidas para ${ticker}`);
+        
+        return {
+            success: true,
+            data: {
+                ticker: ticker,
+                recentNews: topNews,
+                marketImpact: impactAnalysis.marketImpact,
+                decisionImpact: impactAnalysis.decisionImpact,
+                warnings: impactAnalysis.warnings,
+                sentiment: calculateSentiment(topNews),
+                isReal: true,
+                timestamp: new Date().toISOString(),
+                source: 'rss_feeds_real'
+            }
+        };
+        
     } catch (error) {
-        console.error(`❌ Error en scraping de noticias para ${ticker}:`, error.message);
+        console.error(`❌ Error en RSS scraping para ${ticker}:`, error);
         return { success: false, reason: error.message };
     }
+}
+
+// FUNCIÓN PARA DETERMINAR RELEVANCIA DE NOTICIAS
+function isRelevantNews(item, keywords, ticker) {
+    const title = (item.title || '').toLowerCase();
+    const content = (item.contentSnippet || item.content || '').toLowerCase();
+    const fullText = `${title} ${content}`;
+    
+    // Verificar si contiene keywords del ticker
+    const hasTickerKeywords = keywords.some(keyword => 
+        fullText.includes(keyword.toLowerCase())
+    );
+    
+    // Verificar si es noticia financiera general
+    const financialTerms = [
+        'market', 'trading', 'price', 'dollar', 'currency', 'forex', 
+        'gold', 'silver', 'commodity', 'fed', 'ecb', 'central bank',
+        'interest rate', 'inflation', 'gdp', 'unemployment', 'economy'
+    ];
+    
+    const hasFinancialTerms = financialTerms.some(term => 
+        fullText.includes(term)
+    );
+    
+    // Filtrar noticias muy viejas (más de 3 días)
+    const pubDate = new Date(item.pubDate);
+    const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const isRecent = pubDate > threeDaysAgo;
+    
+    return (hasTickerKeywords || hasFinancialTerms) && isRecent;
+}
+
+// FUNCIÓN PARA OBTENER KEYWORDS POR TICKER
+function getTickerKeywords(ticker) {
+    const keywordMap = {
+        'XAUUSD': ['gold', 'xau', 'precious metals', 'bullion', 'gold price', 'troy ounce', 'gold futures'],
+        'EURUSD': ['euro', 'eur', 'european central bank', 'ecb', 'eurozone', 'draghi', 'lagarde'],
+        'AUDUSD': ['australian dollar', 'aud', 'australia', 'rba', 'aussie', 'reserve bank australia'],
+        'USDJPY': ['yen', 'jpy', 'japan', 'boj', 'bank of japan', 'japanese', 'kuroda', 'ueda'],
+        'GBPUSD': ['pound', 'gbp', 'sterling', 'britain', 'uk', 'boe', 'british', 'bank of england'],
+        'USDCHF': ['swiss franc', 'chf', 'switzerland', 'snb', 'swiss national bank', 'franc'],
+        'EURJPY': ['euro', 'yen', 'eur', 'jpy', 'eurozone', 'japan', 'ecb', 'boj'],
+        'AUDJPY': ['australian dollar', 'yen', 'aud', 'jpy', 'australia', 'japan', 'rba', 'boj'],
+        'GBPCAD': ['pound', 'canadian dollar', 'gbp', 'cad', 'britain', 'canada', 'boe', 'bank of canada']
+    };
+    
+    return keywordMap[ticker] || ['forex', 'currency', 'trading'];
+}
+
+// FUNCIÓN PARA DETERMINAR IMPACTO REAL
+function determineRealNewsImpact(title, content) {
+    const fullText = `${title} ${content}`.toLowerCase();
+    
+    // Palabras de CRÍTICO impacto
+    const criticalWords = [
+        'crisis', 'crash', 'plunge', 'surge', 'emergency', 'breaking',
+        'war', 'conflict', 'intervention', 'extraordinary measures',
+        'rate hike', 'rate cut', 'fed decision', 'ecb decision'
+    ];
+    
+    // Palabras de ALTO impacto
+    const highWords = [
+        'soar', 'tumble', 'spike', 'record high', 'record low',
+        'inflation surge', 'gdp growth', 'unemployment', 'non-farm'
+    ];
+    
+    // Palabras de MEDIO impacto
+    const mediumWords = [
+        'rise', 'fall', 'gain', 'drop', 'increase', 'decrease',
+        'forecast', 'outlook', 'estimate', 'target', 'volatility'
+    ];
+    
+    if (criticalWords.some(word => fullText.includes(word))) {
+        return 'CRITICAL';
+    } else if (highWords.some(word => fullText.includes(word))) {
+        return 'HIGH';
+    } else if (mediumWords.some(word => fullText.includes(word))) {
+        return 'MEDIUM';
+    } else {
+        return 'LOW';
+    }
+}
+
+// FUNCIÓN PARA FORMATEAR TIEMPO DE NOTICIAS
+function formatNewsTime(pubDate) {
+    if (!pubDate) return 'Tiempo desconocido';
+    
+    try {
+        const date = new Date(pubDate);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffHours / 24);
+        
+        if (diffDays > 0) {
+            return `Hace ${diffDays} día${diffDays > 1 ? 's' : ''}`;
+        } else if (diffHours > 0) {
+            return `Hace ${diffHours} hora${diffHours > 1 ? 's' : ''}`;
+        } else {
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            return `Hace ${Math.max(1, diffMinutes)} minuto${diffMinutes > 1 ? 's' : ''}`;
+        }
+    } catch (error) {
+        return 'Tiempo desconocido';
+    }
+}
+
+// FUNCIÓN PARA EXTRAER FUENTE DEL RSS
+function extractSource(rssUrl) {
+    if (rssUrl.includes('yahoo.com')) return 'Yahoo Finance';
+    if (rssUrl.includes('investing.com')) return 'Investing.com';
+    if (rssUrl.includes('marketwatch.com')) return 'MarketWatch';
+    if (rssUrl.includes('forexfactory.com')) return 'Forex Factory';
+    return 'Financial RSS';
+}
+
+// FUNCIÓN PARA CALCULAR SENTIMENT
+function calculateSentiment(news) {
+    let positiveCount = 0;
+    let negativeCount = 0;
+    
+    news.forEach(item => {
+        const text = `${item.title} ${item.content}`.toLowerCase();
+        
+        const positiveWords = ['gain', 'rise', 'up', 'surge', 'bullish', 'positive', 'growth'];
+        const negativeWords = ['fall', 'drop', 'down', 'plunge', 'bearish', 'negative', 'decline'];
+        
+        if (positiveWords.some(word => text.includes(word))) positiveCount++;
+        if (negativeWords.some(word => text.includes(word))) negativeCount++;
+    });
+    
+    if (positiveCount > negativeCount) return 'POSITIVE';
+    if (negativeCount > positiveCount) return 'NEGATIVE';
+    return 'NEUTRAL';
+}
+
+// FUNCIÓN MEJORADA PARA CALCULAR RELEVANCIA Y OBTENER TOP 3
+function calculateNewsRelevance(article, keywords, ticker) {
+    const title = (article.title || '').toLowerCase();
+    const content = (article.contentSnippet || article.content || '').toLowerCase();
+    const fullText = `${title} ${content}`;
+    
+    let relevanceScore = 0;
+    
+    // 1. KEYWORDS ESPECÍFICOS DEL TICKER (MÁXIMA RELEVANCIA)
+    const tickerKeywordMatches = keywords.filter(keyword => 
+        fullText.includes(keyword.toLowerCase())
+    ).length;
+    relevanceScore += tickerKeywordMatches * 40; // 40 puntos por keyword del ticker
+    
+    // 2. IMPACTO DE LA NOTICIA (CRÍTICO > ALTO > MEDIO > BAJO)
+    const impactLevel = determineRealNewsImpact(title, content);
+    const impactScores = {
+        'CRITICAL': 50,
+        'HIGH': 30,
+        'MEDIUM': 15,
+        'LOW': 5
+    };
+    relevanceScore += impactScores[impactLevel] || 0;
+    
+    // 3. FRESHNESS - Noticias más recientes son más relevantes
+    const pubDate = new Date(article.pubDate);
+    const hoursAgo = (Date.now() - pubDate.getTime()) / (1000 * 60 * 60);
+    if (hoursAgo <= 1) relevanceScore += 20;      // Última hora
+    else if (hoursAgo <= 6) relevanceScore += 15; // Últimas 6 horas
+    else if (hoursAgo <= 24) relevanceScore += 10; // Último día
+    else if (hoursAgo <= 72) relevanceScore += 5;  // Últimos 3 días
+    
+    // 4. PALABRAS CLAVE FINANCIERAS IMPORTANTES
+    const criticalFinancialTerms = [
+        'fed decision', 'rate hike', 'rate cut', 'ecb decision', 'boj decision',
+        'inflation', 'gdp', 'unemployment', 'non-farm payrolls', 'cpi',
+        'fomc', 'central bank', 'interest rate', 'monetary policy'
+    ];
+    
+    const criticalMatches = criticalFinancialTerms.filter(term => 
+        fullText.includes(term)
+    ).length;
+    relevanceScore += criticalMatches * 25; // 25 puntos por término crítico
+    
+    // 5. FUENTE DE CALIDAD (Yahoo Finance y Investing.com son más confiables)
+    const source = extractSource(article.source || '');
+    if (source.includes('Yahoo Finance') || source.includes('Investing.com')) {
+        relevanceScore += 10;
+    }
+    
+    // 6. LONGITUD DEL TÍTULO (títulos muy cortos o muy largos son menos relevantes)
+    const titleLength = title.length;
+    if (titleLength >= 30 && titleLength <= 120) {
+        relevanceScore += 5;
+    }
+    
+    return relevanceScore;
+}
+
+// FUNCIÓN MEJORADA PARA FILTRAR Y OBTENER TOP 3 NOTICIAS
+function getTop3MostRelevantNews(allNews, keywords, ticker) {
+    if (!allNews || allNews.length === 0) return [];
+    
+    console.log(`🔍 Analizando ${allNews.length} noticias para ${ticker}...`);
+    
+    // Calcular relevancia para cada noticia
+    const newsWithScores = allNews.map(article => ({
+        ...article,
+        relevanceScore: calculateNewsRelevance(article, keywords, ticker)
+    }));
+    
+    // Ordenar por relevancia (mayor a menor)
+    newsWithScores.sort((a, b) => b.relevanceScore - a.relevanceScore);
+    
+    // Log de scores para debugging
+    console.log(`📊 Top noticias por relevancia para ${ticker}:`);
+    newsWithScores.slice(0, 5).forEach((article, i) => {
+        console.log(`   ${i + 1}. [${article.relevanceScore}pts] ${article.impact} - ${article.title.substring(0, 80)}...`);
+    });
+    
+    // Filtrar noticias de baja calidad (score < 20)
+    const qualityNews = newsWithScores.filter(article => article.relevanceScore >= 20);
+    
+    if (qualityNews.length === 0) {
+        console.warn(`⚠️ No se encontraron noticias de calidad para ${ticker}`);
+        return newsWithScores.slice(0, 3); // Devolver las 3 mejores aunque sean de baja calidad
+    }
+    
+    // Devolver las TOP 3 más relevantes
+    const top3 = qualityNews.slice(0, 3);
+    console.log(`✅ Seleccionadas ${top3.length} noticias TOP para ${ticker}`);
+    
+    return top3;
+}
+
+// FUNCIÓN PARA CALCULAR IMPACTO REAL (misma que antes)
+function calculateRealNewsImpact(news, ticker) {
+    if (!news || news.length === 0) {
+        return {
+            decisionImpact: { percentage: 0, level: 'NONE' },
+            marketImpact: { level: 'LOW', description: 'Sin noticias relevantes' },
+            warnings: []
+        };
+    }
+    
+    let totalImpactScore = 0;
+    let criticalCount = 0;
+    let highCount = 0;
+    let mediumCount = 0;
+    const warnings = [];
+    
+    news.forEach(article => {
+        switch (article.impact) {
+            case 'CRITICAL':
+                totalImpactScore += 50;
+                criticalCount++;
+                warnings.push({
+                    type: 'CRITICAL_NEWS',
+                    message: `🚨 CRÍTICO: ${article.title}`,
+                    url: article.url
+                });
+                break;
+            case 'HIGH':
+                totalImpactScore += 25;
+                highCount++;
+                break;
+            case 'MEDIUM':
+                totalImpactScore += 10;
+                mediumCount++;
+                break;
+            case 'LOW':
+                totalImpactScore += 2;
+                break;
+        }
+    });
+    
+    const maxPossibleScore = news.length * 50;
+    const impactPercentage = Math.min(Math.round((totalImpactScore / maxPossibleScore) * 100), 95);
+    
+    let impactLevel = 'LOW';
+    if (criticalCount > 0 || impactPercentage >= 70) {
+        impactLevel = 'CRITICAL';
+    } else if (highCount >= 2 || impactPercentage >= 50) {
+        impactLevel = 'HIGH';
+    } else if (highCount >= 1 || mediumCount >= 3 || impactPercentage >= 25) {
+        impactLevel = 'MEDIUM';
+    }
+    
+    return {
+        decisionImpact: {
+            percentage: impactPercentage,
+            level: impactLevel,
+            breakdown: {
+                critical: criticalCount,
+                high: highCount,
+                medium: mediumCount,
+                total: news.length
+            }
+        },
+        marketImpact: {
+            level: impactLevel,
+            description: `${news.length} noticias RSS reales analizadas. Impacto: ${impactPercentage}%`
+        },
+        warnings: warnings
+    };
 }
 
 // Generar datos técnicos de fallback

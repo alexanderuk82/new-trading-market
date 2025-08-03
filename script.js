@@ -521,76 +521,235 @@ class TradingStrategyApp {
         this.updatePredictionData(orderFlowData.prediction);
     }
 
+    // updateNewsUI(newsData) {
+    //     if (!newsData) return;
+        
+    //     const statusElement = document.getElementById('newsStatus');
+        
+    //     // Actualizar overview de noticias
+    //     const newsOverview = document.getElementById('newsOverview');
+    //     if (newsOverview && newsData.recentNews && newsData.recentNews.length > 0) {
+    //         const topNews = newsData.recentNews.slice(0, 3);
+    //         newsOverview.innerHTML = `
+    //             <div style="font-size: 1.1rem; margin-bottom: 10px;">
+    //                 <strong>Últimas ${topNews.length} noticias:</strong>
+    //             </div>
+    //             ${topNews.map(news => `
+    //                 <div style="margin: 5px 0; padding: 5px; background: rgba(44, 52, 73, 0.3); border-radius: 4px;">
+    //                     <div style="font-size: 0.9rem; color: #ccc;">${news.title}</div>
+    //                     <div style="font-size: 0.8rem; color: #888;">${news.time} - Impacto: ${news.impact}</div>
+    //                 </div>
+    //             `).join('')}
+    //         `;
+    //     } else if (newsOverview) {
+    //         newsOverview.textContent = 'No hay noticias recientes';
+    //     }
+        
+    //     // Actualizar impacto del mercado
+    //     const marketImpact = document.getElementById('marketImpact');
+    //     if (marketImpact && newsData.marketImpact) {
+    //         const impact = newsData.marketImpact;
+    //         marketImpact.innerHTML = `
+    //             <div style="text-align: center; margin: 10px 0;">
+    //                 <div style="font-weight: bold; color: ${this.getImpactColor(impact.level)};">
+    //                     📊 Impacto: ${impact.level}
+    //                 </div>
+    //                 <div style="font-size: 0.9rem; color: #ccc;">
+    //                     ${impact.description}
+    //                 </div>
+    //             </div>
+    //         `;
+    //     }
+        
+    //     // Actualizar warnings
+    //     const newsWarnings = document.getElementById('newsWarnings');
+    //     if (newsWarnings) {
+    //         if (newsData.warnings && newsData.warnings.length > 0) {
+    //             newsWarnings.innerHTML = `
+    //                 <div style="margin-top: 10px;">
+    //                     <strong style="color: #ffa502;">⚠️ Alertas Activas:</strong>
+    //                     ${newsData.warnings.map(warning => `
+    //                         <div style="margin: 5px 0; padding: 8px; background: rgba(255, 165, 2, 0.1); border-left: 3px solid #ffa502; border-radius: 4px;">
+    //                             <div style="font-size: 0.9rem; color: #ffa502;">${warning.message}</div>
+    //                         </div>
+    //                     `).join('')}
+    //                 </div>
+    //             `;
+    //         } else {
+    //             newsWarnings.innerHTML = `
+    //                 <div style="text-align: center; color: #00ff88; margin-top: 10px;">
+    //                     ✅ No hay alertas activas
+    //                 </div>
+    //             `;
+    //         }
+    //     }
+        
+    //     // Actualizar status
+    //     if (statusElement) {
+    //         const dataSource = newsData.isReal ? '✅ REAL' : '⚠️ SIMULADO';
+    //         statusElement.innerHTML = `${dataSource} - Noticias`;
+    //         statusElement.className = `data-status ${newsData.isReal ? 'connected' : 'warning'}`;
+    //     }
+    // }
+
     updateNewsUI(newsData) {
-        if (!newsData) return;
-        
-        const statusElement = document.getElementById('newsStatus');
-        
-        // Actualizar overview de noticias
-        const newsOverview = document.getElementById('newsOverview');
-        if (newsOverview && newsData.recentNews && newsData.recentNews.length > 0) {
-            const topNews = newsData.recentNews.slice(0, 3);
-            newsOverview.innerHTML = `
-                <div style="font-size: 1.1rem; margin-bottom: 10px;">
-                    <strong>Últimas ${topNews.length} noticias:</strong>
-                </div>
-                ${topNews.map(news => `
-                    <div style="margin: 5px 0; padding: 5px; background: rgba(44, 52, 73, 0.3); border-radius: 4px;">
-                        <div style="font-size: 0.9rem; color: #ccc;">${news.title}</div>
-                        <div style="font-size: 0.8rem; color: #888;">${news.time} - Impacto: ${news.impact}</div>
+    if (!newsData) return;
+    
+    const statusElement = document.getElementById('newsStatus');
+    
+    // Actualizar overview de noticias con ENLACES REALES
+    const newsOverview = document.getElementById('newsOverview');
+    if (newsOverview && newsData.recentNews && newsData.recentNews.length > 0) {
+        const topNews = newsData.recentNews.slice(0, 5);
+        newsOverview.innerHTML = `
+            <div style="font-size: 1.1rem; margin-bottom: 10px;">
+                <strong>📰 ${topNews.length} Noticias REALES:</strong>
+            </div>
+            ${topNews.map(news => `
+                <div style="margin: 8px 0; padding: 8px; background: rgba(44, 52, 73, 0.3); border-radius: 4px; border-left: 3px solid ${this.getImpactBorderColor(news.impact)};">
+                    <div style="font-size: 0.9rem; color: #ccc; margin-bottom: 4px;">
+                        <a href="${news.url}" target="_blank" style="color: #00d4aa; text-decoration: none; hover: underline;">
+                            ${news.title}
+                        </a>
                     </div>
-                `).join('')}
-            `;
-        } else if (newsOverview) {
-            newsOverview.textContent = 'No hay noticias recientes';
-        }
-        
-        // Actualizar impacto del mercado
-        const marketImpact = document.getElementById('marketImpact');
-        if (marketImpact && newsData.marketImpact) {
-            const impact = newsData.marketImpact;
-            marketImpact.innerHTML = `
-                <div style="text-align: center; margin: 10px 0;">
-                    <div style="font-weight: bold; color: ${this.getImpactColor(impact.level)};">
-                        📊 Impacto: ${impact.level}
+                    <div style="font-size: 0.8rem; color: #888; display: flex; justify-content: space-between;">
+                        <span>${news.time}</span>
+                        <span style="color: ${this.getImpactColor(news.impact)}; font-weight: bold;">
+                            ${news.impact} IMPACT
+                        </span>
                     </div>
-                    <div style="font-size: 0.9rem; color: #ccc;">
-                        ${impact.description}
+                    <div style="font-size: 0.7rem; color: #666; margin-top: 2px;">
+                        Fuente: ${news.source}
                     </div>
                 </div>
-            `;
-        }
+            `).join('')}
+        `;
+    } else if (newsOverview) {
+        newsOverview.innerHTML = `
+            <div style="text-align: center; color: #ff6b6b; padding: 20px;">
+                ❌ No se encontraron noticias reales
+            </div>
+        `;
+    }
+    
+    // Actualizar IMPACTO EN LA DECISIÓN
+    const marketImpact = document.getElementById('marketImpact');
+    if (marketImpact && newsData.decisionImpact) {
+        const impact = newsData.decisionImpact;
+        const breakdown = impact.breakdown;
         
-        // Actualizar warnings
-        const newsWarnings = document.getElementById('newsWarnings');
-        if (newsWarnings) {
-            if (newsData.warnings && newsData.warnings.length > 0) {
-                newsWarnings.innerHTML = `
-                    <div style="margin-top: 10px;">
-                        <strong style="color: #ffa502;">⚠️ Alertas Activas:</strong>
-                        ${newsData.warnings.map(warning => `
-                            <div style="margin: 5px 0; padding: 8px; background: rgba(255, 165, 2, 0.1); border-left: 3px solid #ffa502; border-radius: 4px;">
-                                <div style="font-size: 0.9rem; color: #ffa502;">${warning.message}</div>
+        marketImpact.innerHTML = `
+            <div style="text-align: center; margin: 15px 0; padding: 15px; background: rgba(0, 0, 0, 0.2); border-radius: 8px;">
+                <div style="font-size: 1.4rem; font-weight: bold; color: ${this.getImpactColor(impact.level)}; margin-bottom: 8px;">
+                    📊 IMPACTO EN DECISIÓN: ${impact.percentage}%
+                </div>
+                <div style="font-size: 1rem; color: #ccc; margin-bottom: 8px;">
+                    Nivel: ${impact.level}
+                </div>
+                <div style="font-size: 0.9rem; color: #aaa;">
+                    ${newsData.marketImpact.description}
+                </div>
+                
+                ${breakdown ? `
+                    <div style="margin-top: 10px; font-size: 0.8rem; color: #888;">
+                        Críticas: ${breakdown.critical} | Altas: ${breakdown.high} | Medias: ${breakdown.medium} | Total: ${breakdown.total}
+                    </div>
+                ` : ''}
+                
+                <div style="margin-top: 8px; font-size: 0.8rem; color: #00ff88;">
+                    ✅ Datos reales de ${newsData.source}
+                </div>
+            </div>
+        `;
+    } else if (marketImpact) {
+        marketImpact.innerHTML = `
+            <div style="text-align: center; color: #ffa502; margin: 10px 0;">
+                ⚠️ Sin datos de impacto disponibles
+            </div>
+        `;
+    }
+    
+    // Actualizar ALERTAS CRÍTICAS
+    const newsWarnings = document.getElementById('newsWarnings');
+    if (newsWarnings) {
+        if (newsData.warnings && newsData.warnings.length > 0) {
+            newsWarnings.innerHTML = `
+                <div style="margin-top: 15px;">
+                    <strong style="color: #ff4757; font-size: 1.1rem;">🚨 ALERTAS CRÍTICAS:</strong>
+                    ${newsData.warnings.map(warning => `
+                        <div style="margin: 8px 0; padding: 12px; background: rgba(255, 71, 87, 0.15); border-left: 4px solid #ff4757; border-radius: 4px;">
+                            <div style="font-size: 1rem; color: #ff4757; font-weight: bold; margin-bottom: 4px;">
+                                ${warning.type === 'CRITICAL_NEWS' ? '📰' : '⚠️'} ${warning.message}
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-            } else {
-                newsWarnings.innerHTML = `
-                    <div style="text-align: center; color: #00ff88; margin-top: 10px;">
-                        ✅ No hay alertas activas
-                    </div>
-                `;
-            }
-        }
-        
-        // Actualizar status
-        if (statusElement) {
-            const dataSource = newsData.isReal ? '✅ REAL' : '⚠️ SIMULADO';
-            statusElement.innerHTML = `${dataSource} - Noticias`;
-            statusElement.className = `data-status ${newsData.isReal ? 'connected' : 'warning'}`;
+                            ${warning.url ? `
+                                <div style="margin-top: 6px;">
+                                    <a href="${warning.url}" target="_blank" style="color: #00d4aa; font-size: 0.9rem; text-decoration: none;">
+                                        👀 Ver noticia completa →
+                                    </a>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        } else {
+            newsWarnings.innerHTML = `
+                <div style="text-align: center; color: #00ff88; margin-top: 15px; padding: 10px; background: rgba(0, 255, 136, 0.1); border-radius: 6px;">
+                    ✅ No hay alertas críticas detectadas
+                </div>
+            `;
         }
     }
+    
+    // Actualizar status con fuente real
+    if (statusElement) {
+        const dataSource = newsData.isReal ? '✅ REAL' : '⚠️ SIMULADO';
+        const sourceDetail = newsData.source || 'unknown';
+        statusElement.innerHTML = `${dataSource} - ${sourceDetail}`;
+        statusElement.className = `data-status ${newsData.isReal ? 'connected' : 'warning'}`;
+    }
+    
+    // MOSTRAR ALERTA DE IMPACTO ALTO EN LA PANTALLA
+    if (newsData.decisionImpact && newsData.decisionImpact.percentage >= 60) {
+        this.showNewsImpactAlert(newsData.decisionImpact);
+    }
+    }
+    
+    // FUNCIÓN PARA MOSTRAR ALERTA DE ALTO IMPACTO
+showNewsImpactAlert(impactData) {
+    const alertMessage = `🚨 ALTO IMPACTO DETECTADO: ${impactData.percentage}%\n\nLas noticias actuales pueden afectar significativamente tu decisión de trading.\n\n¿Continuar con el análisis?`;
+    
+    if (confirm(alertMessage)) {
+        console.log('✅ Usuario decidió continuar pese al alto impacto de noticias');
+        this.showNotification(`⚠️ Operando con ${impactData.percentage}% de impacto noticioso`, 'warning');
+    } else {
+        console.log('🛑 Usuario pausó análisis por alto impacto de noticias');
+        this.showNotification('⏸️ Análisis pausado por precaución noticiosa', 'warning');
+    }
+}
+
+// FUNCIÓN PARA OBTENER COLOR DEL BORDE SEGÚN IMPACTO
+getImpactBorderColor(impact) {
+    const colors = {
+        'CRITICAL': '#ff4757',
+        'HIGH': '#ff6b35',
+        'MEDIUM': '#ffa502',
+        'LOW': '#00ff88'
+    };
+    return colors[impact] || '#888';
+}
+
+// FUNCIÓN MEJORADA PARA OBTENER COLOR DE IMPACTO
+getImpactColor(level) {
+    const colors = {
+        'CRITICAL': '#ff4757',
+        'HIGH': '#ff6b35',
+        'MEDIUM': '#ffa502',
+        'LOW': '#00ff88'
+    };
+    return colors[level] || '#888';
+}
+
 
     showCriticalWarnings(warnings) {
         if (!warnings || warnings.length === 0) return;
@@ -634,65 +793,188 @@ class TradingStrategyApp {
         };
     }
 
+    // FUNCIÓN PARA INTEGRAR IMPACTO DE NOTICIAS EN LA DECISIÓN FINAL
     updateFinalVerdict(verdict) {
-        const directionElement = document.getElementById('verdictDirection');
-        const confidenceElement = document.getElementById('verdictConfidence');
+    const directionElement = document.getElementById('verdictDirection');
+    const confidenceElement = document.getElementById('verdictConfidence');
+    
+    if (!directionElement || !confidenceElement) return;
+    
+    // 🔥 INTEGRAR IMPACTO DE NOTICIAS AQUÍ
+    let finalVerdict = { ...verdict };
+    let newsImpactData = null;
+    
+    // Verificar si hay datos de noticias y calcular impacto
+    if (this.currentAnalysis && this.currentAnalysis.news && this.currentAnalysis.news.decisionImpact) {
+        newsImpactData = this.currentAnalysis.news.decisionImpact;
+        finalVerdict = this.applyNewsImpactToVerdict(verdict, this.currentAnalysis.news);
+    }
+    
+    // Dirección
+    directionElement.textContent = finalVerdict.direction;
+    directionElement.className = finalVerdict.direction.toLowerCase();
+    
+    // MEJORAR UI PARA MOSTRAR RECOMENDACIÓN CLARA
+    const investingData = this.currentAnalysis?.investing;
+    const isRealData = investingData?.isReal;
+    const confidence = finalVerdict.confidence; // Usar confianza ajustada por noticias
+    
+    // Crear resumen de recomendación profesional
+    let recommendationText = '';
+    if (finalVerdict.direction === 'BULLISH') {
+        recommendationText = `📈 RECOMENDACIÓN: COMPRA FUERTE`;
+    } else if (finalVerdict.direction === 'BEARISH') {
+        recommendationText = `📉 RECOMENDACIÓN: VENTA FUERTE`;
+    } else {
+        recommendationText = `⚖️ RECOMENDACIÓN: MANTENERSE NEUTRAL`;
+    }
+    
+    // Determinar fuente de datos
+    let dataSourceText = '';
+    if (isRealData) {
+        dataSourceText = `✅ Análisis basado en datos REALES de Investing.com`;
+    } else {
+        dataSourceText = `⚠️ Análisis basado en datos técnicos procesados`;
+    }
+    
+    // 🔥 AGREGAR INFORMACIÓN DE IMPACTO DE NOTICIAS
+    let newsImpactHTML = '';
+    if (newsImpactData) {
+        const impactColor = this.getNewsImpactColor(newsImpactData.level);
+        const originalConfidence = verdict.confidence;
+        const confidenceChange = originalConfidence - confidence;
         
-        if (!directionElement || !confidenceElement) return;
-        
-        // Dirección
-        directionElement.textContent = verdict.direction;
-        directionElement.className = verdict.direction.toLowerCase();
-        
-        // MEJORAR UI PARA MOSTRAR RECOMENDACIÓN CLARA
-        const investingData = this.currentAnalysis?.investing;
-        const isRealData = investingData?.isReal;
-        const confidence = investingData?.confidence || verdict.confidence;
-        
-        // Crear resumen de recomendación profesional
-        let recommendationText = '';
-        if (verdict.direction === 'BULLISH') {
-            recommendationText = `📈 RECOMENDACIÓN: COMPRA FUERTE`;
-        } else if (verdict.direction === 'BEARISH') {
-            recommendationText = `📉 RECOMENDACIÓN: VENTA FUERTE`;
-        } else {
-            recommendationText = `⚖️ RECOMENDACIÓN: MANTENERSE NEUTRAL`;
-        }
-        
-        // Determinar fuente de datos
-        let dataSourceText = '';
-        if (isRealData) {
-            dataSourceText = `✅ Análisis basado en datos REALES de Investing.com`;
-        } else {
-            dataSourceText = `⚠️ Análisis basado en datos técnicos procesados`;
-        }
-        
-        confidenceElement.innerHTML = `
-            <div style="font-size: 1.8rem; color: ${isRealData ? '#00ff88' : '#ffa502'}; font-weight: bold;">
-                ${confidence}% CONFIANZA
-            </div>
-            <div style="font-size: 1.2rem; color: #ffffff; margin: 8px 0; font-weight: 600;">
-                ${recommendationText}
-            </div>
-            <div style="font-size: 0.9rem; color: #ccc; margin-top: 5px;">
-                ${dataSourceText}
-            </div>
-            <div style="font-size: 0.8rem; color: #888; margin-top: 3px;">
-                Timeframe: 15 minutos • ${new Date().toLocaleTimeString()}
+        newsImpactHTML = `
+            <div style="margin: 10px 0; padding: 8px; background: rgba(${impactColor}, 0.1); border-left: 3px solid ${impactColor}; border-radius: 4px;">
+                <div style="font-size: 0.9rem; color: ${impactColor}; font-weight: bold;">
+                    📰 Impacto Noticias: ${newsImpactData.percentage}% (${newsImpactData.level})
+                </div>
+                ${confidenceChange > 0 ? `
+                    <div style="font-size: 0.8rem; color: #ff6b6b; margin-top: 2px;">
+                        ⚠️ Confianza ajustada: ${originalConfidence}% → ${confidence}% (-${confidenceChange}%)
+                    </div>
+                ` : `
+                    <div style="font-size: 0.8rem; color: #00ff88; margin-top: 2px;">
+                        ✅ Sin ajustes negativos por noticias
+                    </div>
+                `}
+                <div style="font-size: 0.7rem; color: #aaa; margin-top: 2px;">
+                    ${newsImpactData.breakdown ? `Críticas: ${newsImpactData.breakdown.critical}, Altas: ${newsImpactData.breakdown.high}` : ''}
+                </div>
             </div>
         `;
-        
-        confidenceElement.className = confidence >= 70 ? 'high-confidence' : 
-                                    confidence >= 50 ? 'medium-confidence' : 'low-confidence';
-        
-        // Actualizar color de la tarjeta según dirección
-        const verdictCard = document.getElementById('finalVerdict');
-        if (verdictCard) {
-            verdictCard.className = `verdict-card ${verdict.direction.toLowerCase()}`;
-        }
-        
-        console.log(`🎯 UI actualizada: ${verdict.direction} (${confidence}% - ${isRealData ? 'REAL' : 'PROCESADO'})`);
     }
+    
+    confidenceElement.innerHTML = `
+        <div style="font-size: 1.8rem; color: ${isRealData ? '#00ff88' : '#ffa502'}; font-weight: bold;">
+            ${confidence}% CONFIANZA
+            ${newsImpactData && newsImpactData.percentage >= 30 ? 
+                `<span style="font-size: 0.6em; color: #ffa502;">⚠️</span>` : ''}
+        </div>
+        <div style="font-size: 1.2rem; color: #ffffff; margin: 8px 0; font-weight: 600;">
+            ${recommendationText}
+        </div>
+        <div style="font-size: 0.9rem; color: #ccc; margin-top: 5px;">
+            ${dataSourceText}
+        </div>
+        ${newsImpactHTML}
+        <div style="font-size: 0.8rem; color: #888; margin-top: 3px;">
+            Timeframe: 15 minutos • ${new Date().toLocaleTimeString()}
+        </div>
+    `;
+    
+    // Ajustar clase de confianza considerando impacto de noticias
+    let confidenceClass = '';
+    if (newsImpactData && newsImpactData.level === 'CRITICAL') {
+        confidenceClass = 'critical-news-impact';
+    } else if (confidence >= 70) {
+        confidenceClass = 'high-confidence';
+    } else if (confidence >= 50) {
+        confidenceClass = 'medium-confidence';
+    } else {
+        confidenceClass = 'low-confidence';
+    }
+    
+    confidenceElement.className = confidenceClass;
+    
+    // Actualizar color de la tarjeta según dirección Y impacto de noticias
+    const verdictCard = document.getElementById('finalVerdict');
+    if (verdictCard) {
+        let cardClass = `verdict-card ${finalVerdict.direction.toLowerCase()}`;
+        if (newsImpactData && newsImpactData.level === 'CRITICAL') {
+            cardClass += ' critical-news';
+        }
+        verdictCard.className = cardClass;
+    }
+    
+    console.log(`🎯 UI actualizada: ${finalVerdict.direction} (${confidence}% - ${isRealData ? 'REAL' : 'PROCESADO'}) ${newsImpactData ? `[Noticias: ${newsImpactData.percentage}%]` : ''}`);
+}
+
+    // 🔥 NUEVA FUNCIÓN: Aplicar impacto de noticias al veredicto
+applyNewsImpactToVerdict(originalVerdict, newsData) {
+    if (!newsData || !newsData.decisionImpact) {
+        return originalVerdict;
+    }
+    
+    const newsImpact = newsData.decisionImpact;
+    let adjustedConfidence = originalVerdict.confidence;
+    let adjustedDirection = originalVerdict.direction;
+    let adjustedRiskLevel = originalVerdict.riskLevel;
+    
+    // Calcular ajuste de confianza basado en nivel de impacto
+    let confidenceAdjustment = 0;
+    
+    switch (newsImpact.level) {
+        case 'CRITICAL':
+            confidenceAdjustment = -Math.min(25, newsImpact.percentage * 0.4);
+            adjustedRiskLevel = 'HIGH';
+            break;
+        case 'HIGH':
+            confidenceAdjustment = -Math.min(15, newsImpact.percentage * 0.25);
+            if (originalVerdict.riskLevel === 'LOW') adjustedRiskLevel = 'MEDIUM';
+            break;
+        case 'MEDIUM':
+            confidenceAdjustment = -Math.min(8, newsImpact.percentage * 0.15);
+            break;
+        case 'LOW':
+            confidenceAdjustment = -Math.min(3, newsImpact.percentage * 0.05);
+            break;
+    }
+    
+    // Aplicar ajuste pero mantener mínimo de 20%
+    adjustedConfidence = Math.max(20, Math.round(adjustedConfidence + confidenceAdjustment));
+    
+    // Si la confianza cae demasiado, cambiar a NEUTRAL
+    if (adjustedConfidence < 35 && (originalVerdict.direction === 'BULLISH' || originalVerdict.direction === 'BEARISH')) {
+        console.warn(`⚠️ Confianza muy baja (${adjustedConfidence}%) por noticias, cambiando a NEUTRAL`);
+        adjustedDirection = 'NEUTRAL';
+    }
+    
+    return {
+        ...originalVerdict,
+        confidence: adjustedConfidence,
+        direction: adjustedDirection,
+        riskLevel: adjustedRiskLevel,
+        newsImpact: {
+            originalConfidence: originalVerdict.confidence,
+            adjustment: confidenceAdjustment,
+            level: newsImpact.level,
+            percentage: newsImpact.percentage
+        }
+    };
+}
+
+// 🔥 NUEVA FUNCIÓN: Obtener color para impacto de noticias
+getNewsImpactColor(level) {
+    const colors = {
+        'CRITICAL': '#ff4757',
+        'HIGH': '#ff6b35', 
+        'MEDIUM': '#ffa502',
+        'LOW': '#00ff88'
+    };
+    return colors[level] || '#888';
+}
+    
 
     updateOandaData(oandaData) {
         const statusElement = document.getElementById('oandaStatus');
