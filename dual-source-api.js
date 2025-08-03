@@ -28,26 +28,6 @@ class DualSourceAPI {
         }
     }
 
-    // async getAlphaVantagePrice(instrument) {
-    //     try {
-    //         const ticker = this.convertToAlphaFormat(instrument);
-    //         const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${this.alphaVantageKey}`;
-            
-    //         const response = await fetch(url);
-    //         const data = await response.json();
-            
-    //         if (data['Global Quote'] && data['Global Quote']['05. price']) {
-    //             const processed = this.processAlphaVantageData(data['Global Quote'], instrument);
-    //             this.dataQuality.alphaVantage = 85;
-    //             return { source: 'ALPHA_VANTAGE', data: processed, quality: 85 };
-    //         }
-            
-    //         throw new Error('No data from Alpha Vantage');
-    //     } catch (error) {
-    //         this.dataQuality.alphaVantage = 0;
-    //         return { source: 'ALPHA_VANTAGE', error: error.message, quality: 0 };
-    //     }
-    // }
 
     async getAlphaVantagePrice(instrument) {
     try {
@@ -130,7 +110,13 @@ console.log(`   🔍 Todas las keys:`, Object.keys(data));
         'EUR_USD': 'EURUSD',      
         'GBP_USD': 'GBPUSD',      
         'USD_JPY': 'USDJPY',      
-        'AUD_USD': 'AUDUSD'       
+        'AUD_USD': 'AUDUSD',
+        'USD_CHF': 'USDCHF',
+        'EUR_JPY': 'EURJPY',
+        'GBP_JPY': 'GBPJPY',
+        'GBP_CAD': 'GBPCAD',
+        'USD_CAD': 'USDCAD',        
+        
     };
     
     const ticker = map[instrument] || 'XAUUSD';
