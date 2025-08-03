@@ -863,7 +863,38 @@ getImpactColor(level) {
                 </div>
             </div>
         `;
+        }
+        
+    // 🔥 CALCULAR QUALITY SCORE
+let qualityScore = null;
+let qualityIndicator = '';
+        
+     if (typeof DataQualityManager !== 'undefined') {
+    const qualityManager = new DataQualityManager();
+    qualityScore = qualityManager.calculateDataQualityScore(
+        this.currentAnalysis?.oanda,
+        this.currentAnalysis?.investing,
+        this.currentAnalysis?.orderFlow
+    );
+    
+    // 🔥 AJUSTAR SCORE SI HAY VALIDACIÓN CRUZADA
+    if (this.currentAnalysis?.oanda?.price?.validationStatus === 'CROSS_VALIDATED') {
+        qualityScore.overall = Math.min(95, qualityScore.overall + 35);
+        qualityScore.level = qualityScore.overall >= 90 ? 'EXCELLENT' : 
+                           qualityScore.overall >= 75 ? 'GOOD' : 
+                           qualityScore.overall >= 60 ? 'ACCEPTABLE' : 'POOR';
+        console.log('✅ Quality Score ajustado por validación cruzada:', qualityScore);
     }
+    
+    const qualityColor = this.getQualityColor(qualityScore.level);
+    qualityIndicator = `
+        <div style="margin: 5px 0; padding: 4px 8px; background: ${qualityColor}; border-radius: 4px; font-size: 0.8rem;">
+            📊 Calidad de Datos: ${qualityScore.overall}% (${qualityScore.level})
+            ${this.currentAnalysis?.oanda?.price?.validationStatus === 'CROSS_VALIDATED' ? 
+              ' <span style="color: #00ff88;">✅ Validado</span>' : ''}
+        </div>
+    `;
+}   
     
     confidenceElement.innerHTML = `
         <div style="font-size: 1.8rem; color: ${isRealData ? '#00ff88' : '#ffa502'}; font-weight: bold;">
@@ -878,6 +909,7 @@ getImpactColor(level) {
             ${dataSourceText}
         </div>
         ${newsImpactHTML}
+        ${qualityIndicator}
         <div style="font-size: 0.8rem; color: #888; margin-top: 3px;">
             Timeframe: 15 minutos • ${new Date().toLocaleTimeString()}
         </div>
@@ -907,7 +939,18 @@ getImpactColor(level) {
         verdictCard.className = cardClass;
     }
     
-    console.log(`🎯 UI actualizada: ${finalVerdict.direction} (${confidence}% - ${isRealData ? 'REAL' : 'PROCESADO'}) ${newsImpactData ? `[Noticias: ${newsImpactData.percentage}%]` : ''}`);
+        console.log(`🎯 UI actualizada: ${finalVerdict.direction} (${confidence}% - ${isRealData ? 'REAL' : 'PROCESADO'}) ${newsImpactData ? `[Noticias: ${newsImpactData.percentage}%]` : ''}`);
+        
+    }
+    
+    getQualityColor(level) {
+    const colors = {
+        'EXCELLENT': 'rgba(0, 255, 136, 0.2)',
+        'GOOD': 'rgba(0, 212, 170, 0.2)', 
+        'ACCEPTABLE': 'rgba(255, 165, 2, 0.2)',
+        'POOR': 'rgba(255, 71, 87, 0.2)'
+    };
+    return colors[level] || 'rgba(136, 136, 136, 0.2)';
 }
 
     // 🔥 NUEVA FUNCIÓN: Aplicar impacto de noticias al veredicto

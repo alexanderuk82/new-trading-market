@@ -248,3 +248,21 @@ class OandaAPI {
 // Asegurar que esté disponible globalmente
 window.OandaAPI = OandaAPI;
 console.log('✅ OandaAPI cargado correctamente');
+
+// 🔥 INTEGRACIÓN CON DUAL SOURCE
+OandaAPI.prototype.enableDualSource = function() {
+    if (typeof DualSourceAPI !== 'undefined') {
+        this.dualSource = new DualSourceAPI();
+        console.log('✅ Dual Source habilitado en OandaAPI');
+        return true;
+    }
+    console.warn('⚠️ DualSourceAPI no disponible');
+    return false;
+};
+
+OandaAPI.prototype.getCurrentPriceEnhanced = async function(instrument) {
+    if (this.dualSource) {
+        return await this.dualSource.getDualSourcePrice(instrument);
+    }
+    return await this.getCurrentPrice(instrument);
+};
