@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trading Strategy Confirmation</title>
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="ai-chat-styles.css">
 </head>
 <body>
     <div class="container">
@@ -210,6 +211,102 @@
                 </div>
             </div>
 
+            <!-- 🤖 AI CHAT ADVISOR SECTION -->
+            <div class="ai-chat-section">
+                <div class="chat-toggle-btn" id="chatToggleBtn">
+                    <span class="chat-icon">🤖</span>
+                    <span class="chat-text">AI Trading Advisor</span>
+                    <span class="chat-indicator" id="chatIndicator"></span>
+                </div>
+                
+                <div class="chat-panel" id="chatPanel">
+                    <div class="chat-header">
+                        <div class="chat-title">
+                            <span class="chat-avatar">🤖</span>
+                            <div class="chat-info">
+                                <h4>AI Trading Advisor</h4>
+                                <small>DeepSeek V3 • Especializado en Trading</small>
+                            </div>
+                        </div>
+                        <div class="chat-controls">
+                            <button class="chat-clear-btn" id="chatClearBtn" title="Limpiar Chat">
+                                <span>🗑️</span>
+                            </button>
+                            <button class="chat-clear-btn" id="chatConfigBtn" title="Configurar API Key">
+                                <span>🔑</span>
+                            </button>
+                            <button class="chat-clear-btn" id="chatExpandBtn" title="Expandir Chat">
+                                <span>🔍</span>
+                            </button>
+                            <button class="chat-close-btn" id="chatCloseBtn" title="Cerrar">
+                                <span>✕</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-ticker-info" id="chatTickerInfo">
+                        <span class="ticker-label">Analizando:</span>
+                        <span class="ticker-value" id="chatCurrentTicker">XAUUSD</span>
+                        <span class="ticker-status" id="chatTickerStatus">●</span>
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="welcome-message">
+                            <div class="message ai-message">
+                                <div class="message-avatar">🤖</div>
+                                <div class="message-content">
+                                    <p>¡Hola! Soy tu AI Trading Advisor especializado. 📈</p>
+                                    <p>Puedo ayudarte con:</p>
+                                    <ul>
+                                        <li>🔍 Análisis de tu estrategia actual</li>
+                                        <li>📊 Interpretación de datos de mercado</li>
+                                        <li>⚡ Análisis de screenshots/gráficos</li>
+                                        <li>💡 Sugerencias de trading</li>
+                                    </ul>
+                                    <p><strong>¿En qué puedo ayudarte con <span class="ticker-highlight">XAUUSD</span>?</strong></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <div class="image-upload-zone" id="imageUploadZone">
+                            <input type="file" id="imageInput" accept="image/*" multiple hidden>
+                            <div class="upload-prompt">
+                                <span class="upload-icon">📷</span>
+                                <span class="upload-text">Arrastra imágenes aquí o haz clic para subir</span>
+                            </div>
+                        </div>
+                        
+                        <div class="image-preview-container" id="imagePreviewContainer"></div>
+                        
+                        <div class="chat-input-container">
+                            <textarea 
+                                id="chatInput" 
+                                placeholder="Pregúntame sobre tu estrategia de trading, análisis técnico, o sube una imagen para analizar..."
+                                rows="1"></textarea>
+                            <div class="input-actions">
+                                <button class="image-btn" id="imageBtn" title="Subir imagen">
+                                    <span>📷</span>
+                                </button>
+                                <button class="send-btn" id="sendBtn" title="Enviar mensaje">
+                                    <span>📤</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="typing-indicator" id="typingIndicator">
+                            <div class="typing-dots">
+                                <span></span>
+                                <span></span>
+                                <span></span>
+                            </div>
+                            <span class="typing-text">AI analizando...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Historial Compacto -->
             <div class="history-compact">
                 <h3>📋 Historial Reciente</h3>
@@ -220,6 +317,9 @@
         </main>
     </div>
 
+    <!-- Chat Overlay para modo expandido -->
+    <div class="chat-overlay" id="chatOverlay"></div>
+
     <!-- Scripts en el ORDEN CORRECTO - CRÍTICO -->
     <script src="convertToOandaFormat.js"></script>
     <script src="dual-source-api.js"></script>
@@ -229,6 +329,10 @@
     <script src="strategy-engine.js"></script>
     <script src="trade-recommender.js"></script>
     <script src="data-quality-manager.js"></script>
+    <!-- 🤖 AI CHAT ADVISOR SCRIPTS -->
+    <script src="chat-storage-manager.js"></script>
+    <script src="image-upload-handler.js"></script>
+    <script src="ai-chat-advisor.js"></script>
     <script src="script.js"></script>
     
     <!-- Script de debugging para verificar carga -->
@@ -241,7 +345,11 @@
                 InvestingScraper: typeof window.InvestingScraper,
                 OrderFlowAnalyzer: typeof window.OrderFlowAnalyzer,
                 StrategyEngine: typeof window.StrategyEngine,
-                TradeRecommender: typeof window.TradeRecommender
+                TradeRecommender: typeof window.TradeRecommender,
+                // 🤖 AI Chat Scripts
+                ChatStorageManager: typeof window.ChatStorageManager,
+                ImageUploadHandler: typeof window.ImageUploadHandler,
+                AIChatAdvisor: typeof window.AIChatAdvisor
             });
         }, 500);
     </script>

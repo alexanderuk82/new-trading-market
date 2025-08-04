@@ -14,6 +14,9 @@ class TradingStrategyApp {
             this.tradeRecommender = null;
         }
         
+        // 🤖 AI CHAT ADVISOR
+        this.aiChatAdvisor = null;
+        
         this.currentTicker = 'XAUUSD';
         this.isAnalyzing = false;
         
@@ -46,9 +49,15 @@ class TradingStrategyApp {
         console.log('✅ Todas las dependencias están disponibles');
     }
 
-    initializeApp() {
+    async initializeApp() {
         this.setupEventListeners();
         this.loadInitialData();
+        
+        // 🤖 INICIALIZAR AI CHAT ADVISOR
+        await this.initializeAIChatAdvisor();
+            
+            // 🤖 CONFIGURAR EVENTOS DEL CHAT
+            this.setupChatEvents();
     }
 
     setupEventListeners() {
@@ -109,6 +118,11 @@ class TradingStrategyApp {
                 // Actualizar botón activo
                 document.querySelectorAll('.pair-btn').forEach(b => b.classList.remove('active'));
                 e.target.classList.add('active');
+                
+                // 🤖 ACTUALIZAR AI CHAT ADVISOR
+                if (this.aiChatAdvisor) {
+                    this.aiChatAdvisor.changeTicker(pair);
+                }
             });
         });
     }
@@ -253,6 +267,11 @@ class TradingStrategyApp {
                 news: newsAnalysis,
                 tradeRecommendation: tradeRecommendation
             };
+            
+            // 🤖 ACTUALIZAR CONTEXTO DEL AI CHAT ADVISOR
+            if (this.aiChatAdvisor) {
+                this.aiChatAdvisor.updateMarketContext(this.currentAnalysis);
+            }
             
             this.showNotification('✅ Análisis completo finalizado');
             
@@ -1348,6 +1367,143 @@ updateLiquidityData(liquidityData) {
             this.showNotification('📤 Análisis completo exportado');
         }
     }
+    
+    // 🤖 AI CHAT ADVISOR METHODS
+    async initializeAIChatAdvisor() {
+        try {
+            console.log('🤖 Inicializando AI Chat Advisor...');
+            
+            // Verificar que las clases estén disponibles
+            if (typeof AIChatAdvisor === 'undefined') {
+                console.warn('⚠️ AIChatAdvisor no disponible');
+                return;
+            }
+            
+            // Crear instancia
+            this.aiChatAdvisor = new AIChatAdvisor();
+            this.aiChatAdvisor.currentTicker = this.currentTicker;
+            
+            // Inicializar
+            const initialized = await this.aiChatAdvisor.initialize();
+            
+            if (initialized) {
+                console.log('✅ AI Chat Advisor inicializado correctamente');
+                
+                // Si ya hay análisis, actualizarlo
+                if (this.currentAnalysis) {
+                    this.aiChatAdvisor.updateMarketContext(this.currentAnalysis);
+                }
+            } else {
+                console.error('❌ Error inicializando AI Chat Advisor');
+                this.aiChatAdvisor = null;
+            }
+            
+        } catch (error) {
+            console.error('❌ Error en inicialización AI Chat Advisor:', error);
+            this.aiChatAdvisor = null;
+        }
+    }
+    
+    // 🤖 CONFIGURAR EVENTOS DEL CHAT
+    setupChatEvents() {
+        // Botón toggle del chat
+        const chatToggleBtn = document.getElementById('chatToggleBtn');
+        const chatPanel = document.getElementById('chatPanel');
+        
+        if (chatToggleBtn && chatPanel) {
+            chatToggleBtn.addEventListener('click', () => {
+                if (chatPanel.style.display === 'none' || !chatPanel.style.display) {
+                    chatPanel.style.display = 'flex';
+                    chatPanel.classList.add('open');
+                } else {
+                    chatPanel.style.display = 'none';
+                    chatPanel.classList.remove('open');
+                }
+            });
+        }
+        
+        // Botón de cerrar chat
+        const chatCloseBtn = document.getElementById('chatCloseBtn');
+        if (chatCloseBtn && chatPanel) {
+            chatCloseBtn.addEventListener('click', () => {
+                chatPanel.style.display = 'none';
+                chatPanel.classList.remove('open');
+            });
+        }
+        
+        // Botón de limpiar chat
+        const chatClearBtn = document.getElementById('chatClearBtn');
+        if (chatClearBtn && this.aiChatAdvisor) {
+            chatClearBtn.addEventListener('click', () => {
+                if (confirm('¿Estás seguro de que quieres limpiar el historial del chat?')) {
+                    this.aiChatAdvisor.clearChat();
+                }
+            });
+        }
+        
+        // Botón de configurar API Key
+        const chatConfigBtn = document.getElementById('chatConfigBtn');
+        if (chatConfigBtn && this.aiChatAdvisor) {
+            chatConfigBtn.addEventListener('click', () => {
+                this.aiChatAdvisor.configureAPIKey();
+            });
+        }
+        
+        // Botón de expandir chat
+        const chatExpandBtn = document.getElementById('chatExpandBtn');
+        const chatSection = document.querySelector('.ai-chat-section');
+        const chatOverlay = document.getElementById('chatOverlay');
+        
+        if (chatExpandBtn && chatSection && chatOverlay) {
+            let isExpanded = false;
+            
+            chatExpandBtn.addEventListener('click', () => {
+                if (!isExpanded) {
+                    // Expandir
+                    chatSection.classList.add('expanded');
+                    chatOverlay.classList.add('show');
+                    chatExpandBtn.innerHTML = '<span>🔎</span>';
+                    chatExpandBtn.title = 'Contraer Chat';
+                    isExpanded = true;
+                    
+                    // Focus en el input del chat
+                    setTimeout(() => {
+                        const chatInput = document.getElementById('chatInput');
+                        if (chatInput) chatInput.focus();
+                    }, 400);
+                } else {
+                    // Contraer
+                    chatSection.classList.remove('expanded');
+                    chatOverlay.classList.remove('show');
+                    chatExpandBtn.innerHTML = '<span>🔍</span>';
+                    chatExpandBtn.title = 'Expandir Chat';
+                    isExpanded = false;
+                }
+            });
+            
+            // Cerrar al hacer clic en el overlay
+            chatOverlay.addEventListener('click', () => {
+                if (isExpanded) {
+                    chatSection.classList.remove('expanded');
+                    chatOverlay.classList.remove('show');
+                    chatExpandBtn.innerHTML = '<span>🔍</span>';
+                    chatExpandBtn.title = 'Expandir Chat';
+                    isExpanded = false;
+                }
+            });
+            
+            // Cerrar con ESC
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && isExpanded) {
+                    chatSection.classList.remove('expanded');
+                    chatOverlay.classList.remove('show');
+                    chatExpandBtn.innerHTML = '<span>🔍</span>';
+                    chatExpandBtn.title = 'Expandir Chat';
+                    isExpanded = false;
+                }
+            });
+        }
+    }
 
     clearAnalysisHistory() {
         if (confirm('¿Estás seguro de que quieres limpiar todo el historial?')) {
@@ -1608,6 +1764,8 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('error', (e) => {
     console.error('Error global:', e.error);
 });
+
+
 
 // Cleanup al cerrar la página
 window.addEventListener('beforeunload', () => {
