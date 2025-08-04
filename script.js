@@ -1131,29 +1131,91 @@ getNewsImpactColor(level) {
         }
     }
 
-    updateLiquidityData(liquidityData) {
-        const liquidityLevel = document.getElementById('liquidityLevel');
-        if (liquidityLevel) {
-            liquidityLevel.textContent = liquidityData.level;
-            liquidityLevel.className = this.getLiquidityClass(liquidityData.level);
-        }
+    // updateLiquidityData(liquidityData) {
+    //     const liquidityLevel = document.getElementById('liquidityLevel');
+    //     if (liquidityLevel) {
+    //         liquidityLevel.textContent = liquidityData.level;
+    //         liquidityLevel.className = this.getLiquidityClass(liquidityData.level);
+    //     }
         
-        const liquidityTrend = document.getElementById('liquidityTrend');
-        if (liquidityTrend) {
-            liquidityTrend.textContent = liquidityData.trend;
-            liquidityTrend.className = this.getTrendClass(liquidityData.trend);
-        }
+    //     const liquidityTrend = document.getElementById('liquidityTrend');
+    //     if (liquidityTrend) {
+    //         liquidityTrend.textContent = liquidityData.trend;
+    //         liquidityTrend.className = this.getTrendClass(liquidityData.trend);
+    //     }
         
-        // Actualizar barras de liquidez
-        const bidPercentage = (liquidityData.totalBidVolume / (liquidityData.totalBidVolume + liquidityData.totalAskVolume)) * 100;
-        const askPercentage = 100 - bidPercentage;
+    //     // Actualizar barras de liquidez
+    //     const bidPercentage = (liquidityData.totalBidVolume / (liquidityData.totalBidVolume + liquidityData.totalAskVolume)) * 100;
+    //     const askPercentage = 100 - bidPercentage;
         
-        const bidBar = document.getElementById('bidBar');
-        const askBar = document.getElementById('askBar');
+    //     const bidBar = document.getElementById('bidBar');
+    //     const askBar = document.getElementById('askBar');
         
-        if (bidBar) bidBar.style.width = `${bidPercentage}%`;
-        if (askBar) askBar.style.width = `${askPercentage}%`;
+    //     if (bidBar) bidBar.style.width = `${bidPercentage}%`;
+    //     if (askBar) askBar.style.width = `${askPercentage}%`;
+    // }
+
+    // 🎨 ACTUALIZAR FUNCIÓN EN script.js
+updateLiquidityData(liquidityData) {
+    const liquidityLevel = document.getElementById('liquidityLevel');
+    if (liquidityLevel) {
+        // Mostrar nivel + score de calidad
+        const displayText = `${liquidityData.level} (${liquidityData.liquidityScore || 0}%)`;
+        liquidityLevel.textContent = displayText;
+        liquidityLevel.className = this.getLiquidityClass(liquidityData.level);
+        
+        // Agregar tooltip con detalles
+        liquidityLevel.title = `Spread: ${liquidityData.spreadQuality}, Volume: ${liquidityData.volumeLevel}, Balance: ${liquidityData.balanceQuality}`;
     }
+    
+    const liquidityTrend = document.getElementById('liquidityTrend');
+    if (liquidityTrend) {
+        // Mostrar tendencia + calidad general
+        const qualityEmoji = liquidityData.quality === 'EXCELLENT' ? '🟢' :
+                             liquidityData.quality === 'GOOD' ? '🟡' :
+                             liquidityData.quality === 'FAIR' ? '🟠' : '🔴';
+        
+        liquidityTrend.textContent = `${qualityEmoji} ${liquidityData.trend}`;
+        liquidityTrend.className = this.getTrendClass(liquidityData.trend);
+        
+        // Tooltip con ratio
+        liquidityTrend.title = `Bid/Ask Ratio: ${liquidityData.ratio} (${liquidityData.balanceQuality})`;
+    }
+    
+    // Actualizar barras de liquidez con datos más precisos
+    const bidPercentage = (liquidityData.totalBidVolume / (liquidityData.totalBidVolume + liquidityData.totalAskVolume)) * 100;
+    const askPercentage = 100 - bidPercentage;
+    
+    const bidBar = document.getElementById('bidBar');
+    const askBar = document.getElementById('askBar');
+    
+    if (bidBar) {
+        bidBar.style.width = `${bidPercentage}%`;
+        // Cambiar color según calidad
+        if (liquidityData.quality === 'EXCELLENT') {
+            bidBar.style.backgroundColor = '#00ff88';
+        } else if (liquidityData.quality === 'GOOD') {
+            bidBar.style.backgroundColor = '#00d4aa';
+        } else {
+            bidBar.style.backgroundColor = '#ffa502';
+        }
+    }
+    
+    if (askBar) {
+        askBar.style.width = `${askPercentage}%`;
+        // Matching color scheme
+        if (liquidityData.quality === 'EXCELLENT') {
+            askBar.style.backgroundColor = '#ff4757';
+        } else if (liquidityData.quality === 'GOOD') {
+            askBar.style.backgroundColor = '#ff6b6b';
+        } else {
+            askBar.style.backgroundColor = '#ff7675';
+        }
+    }
+    
+    // Log para debugging
+    console.log(`💰 UI Liquidez actualizada: ${liquidityData.level} (${liquidityData.liquidityScore}%) - ${liquidityData.quality}`);
+}
 
     updateOrderFlowData(orderFlowData) {
         const flowDirection = document.getElementById('orderFlowDirection');
