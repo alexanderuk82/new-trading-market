@@ -1,13 +1,25 @@
 /**
- * 🤖 AI CHAT ADVISOR - Integración OpenRouter + DeepSeek R1T2 Chimera
- * Asesor profesional de trading con análisis de mercado contextual
+ * 🤖 AI CHAT ADVISOR - Volume Profile Expert System
+ * Especialista en metodología Dale Woods + Setup EMAs personalizado
  */
 
 class AIChatAdvisor {
     constructor() {
-        // 🔑 API Key configurada por el usuario (debes obtener la tuya en https://openrouter.ai)
+        // 🔑 API Key configurada por el usuario
         this.apiKey = this.getAPIKey();
-        this.model = 'deepseek/deepseek-r1:free'; // Modelo gratuito más estable
+        
+        // 🤖 MODELO ÚNICO - Llama Vision para TODO (texto + imágenes)
+        this.model = 'meta-llama/llama-3.2-11b-vision-instruct:free';
+        
+        // Estado de conversación mejorado
+        this.conversationContext = {
+            hasAnalyzedImage: false,
+            lastImageAnalysis: null,
+            isFollowUp: false,
+            conversationHistory: [],
+            lastAnalysisData: null
+        };
+        
         this.baseURL = 'https://openrouter.ai/api/v1/chat/completions';
         this.currentTicker = 'XAUUSD';
         this.isThinking = false;
@@ -21,25 +33,134 @@ class AIChatAdvisor {
         this.chatMessages = null;
         this.messageInput = null;
         this.sendButton = null;
-        this.toggleButton = null;
         this.uploadButton = null;
         
-        // Estado actual del mercado (se actualiza desde script.js)
+        // Estado actual del mercado
         this.currentMarketContext = null;
         
-        console.log('🤖 AI Chat Advisor inicializado');
+        console.log('🤖 Volume Profile AI Expert inicializado');
+    }
+    
+    // 🧠 OBTENER CONTEXTO DETALLADO DEL ANÁLISIS
+    getDetailedAnalysisContext() {
+        if (!this.currentMarketContext) {
+            return 'No hay datos de análisis técnico disponibles.';
+        }
+
+        const analysis = this.currentMarketContext;
+        let detailedContext = '';
+
+        // OANDA Data
+        if (analysis.oanda) {
+            detailedContext += `\nOANDA DATOS EN TIEMPO REAL:\n`;
+            detailedContext += `• Precio Bid: ${analysis.oanda.price?.bid || 'N/A'}\n`;
+            detailedContext += `• Precio Ask: ${analysis.oanda.price?.ask || 'N/A'}\n`;
+            detailedContext += `• Precio Mid: ${analysis.oanda.price?.mid || 'N/A'}\n`;
+            detailedContext += `• Spread: ${analysis.oanda.price?.spread || 'N/A'} pips\n`;
+            detailedContext += `• Volumen: ${analysis.oanda.price?.volume ? analysis.oanda.price.volume.toLocaleString() : 'N/A'}\n`;
+            detailedContext += `• Timestamp: ${new Date(analysis.oanda.price?.time || '').toLocaleString()}\n`;
+        }
+
+        // Investing.com Data
+        if (analysis.investing) {
+            detailedContext += `\nINVESTING.COM ANÁLISIS TÉCNICO:\n`;
+            detailedContext += `• Estado de datos: ${analysis.investing.isReal ? 'DATOS REALES' : 'SIMULADO'}\n`;
+            
+            if (analysis.investing.movingAverages) {
+                detailedContext += `• Medias Móviles Summary: ${analysis.investing.movingAverages.summary}\n`;
+                detailedContext += `• Medias Móviles Señal: ${analysis.investing.movingAverages.signal}\n`;
+                if (analysis.investing.movingAverages.details) {
+                    detailedContext += `• Detalles MAs: ${JSON.stringify(analysis.investing.movingAverages.details)}\n`;
+                }
+            }
+            
+            if (analysis.investing.oscillators) {
+                detailedContext += `• Osciladores Summary: ${analysis.investing.oscillators.summary}\n`;
+                detailedContext += `• Osciladores Señal: ${analysis.investing.oscillators.signal}\n`;
+                if (analysis.investing.oscillators.details) {
+                    detailedContext += `• Detalles Osciladores: ${JSON.stringify(analysis.investing.oscillators.details)}\n`;
+                }
+            }
+        }
+
+        // Order Flow Data
+        if (analysis.orderFlow) {
+            detailedContext += `\nORDER FLOW ANÁLISIS:\n`;
+            detailedContext += `• Nivel de Liquidez: ${analysis.orderFlow.liquidity?.level || 'N/A'}\n`;
+            detailedContext += `• Score de Liquidez: ${analysis.orderFlow.liquidity?.score || 'N/A'}\n`;
+            detailedContext += `• Predicción Dirección: ${analysis.orderFlow.prediction?.direction || 'N/A'}\n`;
+            detailedContext += `• Probabilidad: ${analysis.orderFlow.prediction?.probability || 0}%\n`;
+            detailedContext += `• Confianza: ${analysis.orderFlow.prediction?.confidence || 'N/A'}\n`;
+            if (analysis.orderFlow.levels) {
+                detailedContext += `• Niveles Clave: ${JSON.stringify(analysis.orderFlow.levels)}\n`;
+            }
+        }
+
+        // Trade Recommendation
+        if (analysis.tradeRecommendation) {
+            detailedContext += `\nRECOMENDACIÓN DE TRADE:\n`;
+            detailedContext += `• Acción Recomendada: ${analysis.tradeRecommendation.action || 'N/A'}\n`;
+            detailedContext += `• Confianza: ${analysis.tradeRecommendation.confidence || 0}%\n`;
+            detailedContext += `• Razón: ${analysis.tradeRecommendation.reason || 'N/A'}\n`;
+            if (analysis.tradeRecommendation.entryPrice) {
+                detailedContext += `• Precio Entrada: ${analysis.tradeRecommendation.entryPrice}\n`;
+            }
+            if (analysis.tradeRecommendation.stopLoss) {
+                detailedContext += `• Stop Loss: ${analysis.tradeRecommendation.stopLoss}\n`;
+            }
+            if (analysis.tradeRecommendation.takeProfit) {
+                detailedContext += `• Take Profit: ${analysis.tradeRecommendation.takeProfit}\n`;
+            }
+        }
+
+        // Verdict Final
+        if (analysis.verdict) {
+            detailedContext += `\nVEREDICTO FINAL DEL SISTEMA:\n`;
+            detailedContext += `• Dirección: ${analysis.verdict.direction || 'N/A'}\n`;
+            detailedContext += `• Confianza: ${analysis.verdict.confidence || 0}%\n`;
+            detailedContext += `• Recomendación: ${analysis.verdict.recommendation || 'N/A'}\n`;
+            detailedContext += `• Timestamp: ${new Date(analysis.verdict.timestamp || analysis.timestamp).toLocaleString()}\n`;
+        }
+
+        // News Analysis
+        if (analysis.news) {
+            detailedContext += `\nANÁLISIS DE NOTICIAS:\n`;
+            detailedContext += `• Estado: ${analysis.news.isReal ? 'NOTICIAS REALES' : 'SIMULADO'}\n`;
+            if (analysis.news.decisionImpact) {
+                detailedContext += `• Impacto en Decisión: ${analysis.news.decisionImpact.percentage}% (${analysis.news.decisionImpact.level})\n`;
+                if (analysis.news.decisionImpact.breakdown) {
+                    detailedContext += `• Breakdown: Críticas=${analysis.news.decisionImpact.breakdown.critical}, Altas=${analysis.news.decisionImpact.breakdown.high}, Total=${analysis.news.decisionImpact.breakdown.total}\n`;
+                }
+            }
+            if (analysis.news.marketImpact) {
+                detailedContext += `• Impacto Mercado: ${analysis.news.marketImpact.level} - ${analysis.news.marketImpact.description}\n`;
+            }
+            if (analysis.news.warnings && analysis.news.warnings.length > 0) {
+                detailedContext += `• Alertas Críticas: ${analysis.news.warnings.length} detectadas\n`;
+                analysis.news.warnings.forEach((warning, index) => {
+                    detailedContext += `  ${index + 1}. ${warning.message}\n`;
+                });
+            } else {
+                detailedContext += `• Alertas Críticas: Ninguna detectada\n`;
+            }
+            if (analysis.news.recentNews && analysis.news.recentNews.length > 0) {
+                detailedContext += `• Noticias Recientes: ${analysis.news.recentNews.length} noticias\n`;
+                analysis.news.recentNews.slice(0, 3).forEach((news, index) => {
+                    detailedContext += `  ${index + 1}. [${news.impact}] ${news.title} (${news.time})\n`;
+                });
+            }
+        }
+
+        return detailedContext || 'Análisis técnico en proceso...';
     }
     
     // 🔑 OBTENER API KEY
     getAPIKey() {
-        // Primero intentar obtener de localStorage
         const savedKey = localStorage.getItem('openrouter_api_key');
         if (savedKey) {
-            console.log('🔑 API Key encontrada en localStorage');
+            console.log('🔑 API Key encontrada');
             return savedKey;
         }
-        
-        // Si no hay key guardada, mostrar mensaje de configuración
         console.warn('⚠️ No se encontró API Key de OpenRouter');
         return null;
     }
@@ -49,30 +170,28 @@ class AIChatAdvisor {
         const currentKey = localStorage.getItem('openrouter_api_key');
         const message = currentKey ? 
             `API Key actual: ${currentKey.substring(0, 10)}...\n\n¿Quieres cambiarla?` :
-            'Necesitas configurar tu API Key de OpenRouter para usar el chat con IA.\n\nPuedes obtener una gratis en: https://openrouter.ai';
+            'Configura tu API Key de OpenRouter\n\nObtén una gratis en: https://openrouter.ai';
         
         const newKey = prompt(message + '\n\nIngresa tu API Key:', currentKey || '');
         
         if (newKey && newKey.trim()) {
             localStorage.setItem('openrouter_api_key', newKey.trim());
             this.apiKey = newKey.trim();
-            this.showNotification('API Key configurada correctamente', 'success');
+            this.showNotification('API Key configurada', 'success');
             return true;
         } else if (newKey === '') {
             localStorage.removeItem('openrouter_api_key');
             this.apiKey = null;
             this.showNotification('API Key eliminada', 'info');
         }
-        
         return false;
     }
 
     // 🔧 INICIALIZACIÓN
     async initialize() {
         try {
-            console.log('🔧 Inicializando AI Chat Advisor...');
+            console.log('🔧 Inicializando Volume Profile Expert...');
             
-            // Verificar que los managers estén disponibles
             if (typeof ChatStorageManager !== 'undefined') {
                 this.storageManager = new ChatStorageManager();
             } else {
@@ -87,58 +206,47 @@ class AIChatAdvisor {
                 return false;
             }
             
-            // Crear UI
             this.createChatUI();
             this.setupEventListeners();
-            
-            // Cargar historial del ticker actual
             this.loadChatHistory(this.currentTicker);
             
-            console.log('✅ AI Chat Advisor listo');
+            console.log('✅ Volume Profile Expert listo');
             return true;
             
         } catch (error) {
-            console.error('❌ Error inicializando AI Chat Advisor:', error);
+            console.error('❌ Error inicializando:', error);
             return false;
         }
     }
 
     // 🎨 CONECTAR CON UI EXISTENTE
     createChatUI() {
-        // En lugar de crear nueva UI, conectar con la existente
         this.chatContainer = document.getElementById('chatPanel');
         this.chatMessages = document.getElementById('chatMessages');
         this.messageInput = document.getElementById('chatInput');
         this.sendButton = document.getElementById('sendBtn');
         this.uploadButton = document.getElementById('imageBtn');
         
-        // Verificar que los elementos existan
         if (!this.chatContainer || !this.chatMessages || !this.messageInput || !this.sendButton) {
-            console.error('❌ Elementos del chat no encontrados en el DOM');
+            console.error('❌ Elementos del chat no encontrados');
             return false;
         }
         
-        // Actualizar ticker en el mensaje de bienvenida
         const welcomeTicker = document.querySelector('.ticker-highlight');
         if (welcomeTicker) {
             welcomeTicker.textContent = this.currentTicker;
         }
         
-        console.log('🎨 Conectado con UI existente del chat');
+        console.log('🎨 Conectado con UI existente');
         return true;
     }
 
     // 🎧 CONFIGURAR EVENT LISTENERS
     setupEventListeners() {
-        // Los event listeners del toggle y controles ya están manejados por script.js
-        // Solo configuramos los específicos del chat
-        
-        // Envío de mensajes
         this.sendButton?.addEventListener('click', () => {
             this.sendMessage();
         });
 
-        // Enter para enviar (Shift+Enter para nueva línea)
         this.messageInput?.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -146,7 +254,6 @@ class AIChatAdvisor {
             }
         });
 
-        // Upload de imágenes
         this.uploadButton?.addEventListener('click', () => {
             document.getElementById('imageInput')?.click();
         });
@@ -155,40 +262,88 @@ class AIChatAdvisor {
             this.handleImageUpload(e);
         });
 
-        // Auto-resize del textarea
         this.messageInput?.addEventListener('input', (e) => {
             this.autoResizeTextarea(e.target);
+        });
+        
+        this.messageInput?.addEventListener('paste', (e) => {
+            this.handlePasteImages(e);
         });
 
         console.log('🎧 Event listeners configurados');
     }
 
-    // 📸 MANEJO DE IMÁGENES (usando el sistema existente)
+    // 📸 MANEJO DE IMÁGENES
     async handleImageUpload(event) {
         const files = Array.from(event.target.files);
         if (files.length === 0) return;
 
         try {
-            // Usar el ImageUploadHandler existente
-            if (this.imageHandler) {
-                for (const file of files) {
-                    await this.imageHandler.handleImageUpload(file);
-                }
-                
-                // Mostrar vista previa en el contenedor existente
-                const previewContainer = document.getElementById('imagePreviewContainer');
-                if (previewContainer) {
-                    previewContainer.style.display = 'flex';
-                }
-            }
-            
+            await this.processAndDisplayImages(files);
         } catch (error) {
             console.error('❌ Error subiendo imágenes:', error);
             this.showNotification('Error subiendo imágenes', 'error');
         }
-
-        // Limpiar input
         event.target.value = '';
+    }
+    
+    async handlePasteImages(event) {
+        const items = event.clipboardData?.items;
+        if (!items) return;
+        
+        const imageFiles = [];
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.type.startsWith('image/')) {
+                event.preventDefault();
+                const file = item.getAsFile();
+                if (file) imageFiles.push(file);
+            }
+        }
+        
+        if (imageFiles.length > 0) {
+            this.showNotification(`📷 ${imageFiles.length} imagen(es) pegada(s)`, 'success');
+            await this.processAndDisplayImages(imageFiles);
+        }
+    }
+    
+    async processAndDisplayImages(files) {
+        if (!this.imageHandler) {
+            this.showNotification('Image handler no disponible', 'error');
+            return;
+        }
+        
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        if (!previewContainer) {
+            this.showNotification('Contenedor no encontrado', 'error');
+            return;
+        }
+        
+        try {
+            const results = await this.imageHandler.processMultipleFiles(files);
+            
+            for (const result of results) {
+                if (result.success) {
+                    this.imageHandler.createImagePreview(result.data, previewContainer);
+                } else {
+                    console.error(`Error procesando ${result.filename}:`, result.error);
+                    this.showNotification(`Error: ${result.error}`, 'error');
+                }
+            }
+            
+            if (previewContainer.children.length > 0) {
+                previewContainer.style.display = 'flex';
+            }
+            
+            const successCount = results.filter(r => r.success).length;
+            if (successCount > 0) {
+                this.showNotification(`✅ ${successCount} imagen(es) lista(s)`, 'success');
+            }
+            
+        } catch (error) {
+            console.error('❌ Error procesando imágenes:', error);
+            this.showNotification('Error procesando imágenes', 'error');
+        }
     }
 
     hasUploadedImages() {
@@ -219,48 +374,37 @@ class AIChatAdvisor {
             return;
         }
 
-        // Verificar API Key
         if (!this.apiKey) {
             const configured = this.configureAPIKey();
             if (!configured) {
-                this.showNotification('Necesitas configurar tu API Key para usar el chat', 'warning');
+                this.showNotification('Necesitas configurar tu API Key', 'warning');
                 return;
             }
         }
 
         if (this.isThinking) {
-            this.showNotification('La IA está procesando tu mensaje anterior...', 'info');
+            this.showNotification('La IA está procesando...', 'info');
             return;
         }
 
         try {
-            // Agregar mensaje del usuario a la UI
             this.addUserMessage(message);
-            
-            // Limpiar input
             this.messageInput.value = '';
             this.autoResizeTextarea(this.messageInput);
             
-            // Preparar contexto completo
             const fullContext = this.prepareContextForAI(message);
-            
-            // Mostrar indicador de "thinking"
             this.showThinkingIndicator();
             
-            // Llamar a la API
             const response = await this.callOpenRouterAPI(fullContext);
-            
-            // Ocultar indicador
             this.hideThinkingIndicator();
             
-            // Agregar respuesta de la IA
             this.addAIMessage(response);
-            
-            // Guardar conversación
             this.saveChatToStorage();
             
-            // Limpiar imágenes subidas
-            this.clearUploadedImages();
+            // Solo limpiar imágenes si no es follow-up
+            if (!this.conversationContext.isFollowUp) {
+                this.clearUploadedImages();
+            }
             
         } catch (error) {
             console.error('❌ Error enviando mensaje:', error);
@@ -269,17 +413,15 @@ class AIChatAdvisor {
             let errorMessage = '❌ **Error de conexión**\n\n';
             
             if (error.message.includes('401')) {
-                errorMessage += 'API Key inválida o expirada. \n\n¿Quieres configurar una nueva API Key?';
+                errorMessage += 'API Key inválida. ¿Configurar nueva?';
                 this.addAIMessage(errorMessage);
-                
-                // Ofrecer reconfigurar API Key
                 setTimeout(() => {
-                    if (confirm('Tu API Key parece ser inválida. ¿Quieres configurar una nueva?')) {
+                    if (confirm('API Key inválida. ¿Configurar nueva?')) {
                         this.configureAPIKey();
                     }
                 }, 1000);
             } else {
-                errorMessage += 'No pude procesar tu mensaje. Verifica tu conexión a internet y intenta nuevamente.';
+                errorMessage += 'Error de conexión. Verifica internet e intenta nuevamente.';
                 this.addAIMessage(errorMessage);
             }
             
@@ -287,80 +429,248 @@ class AIChatAdvisor {
         }
     }
 
-    // 🔍 PREPARAR CONTEXTO PARA LA IA
+    // 🤖 CONTEXTO DE CONVERSACIÓN MEJORADO
+    updateConversationContext(hasImages, userMessage) {
+        // Detectar si es follow-up conversacional
+        const followUpIndicators = [
+            'que opinas', 'tu qué', 'entonces', 'y ahora', 'confirmalo', 'confirma',
+            'es asi', 'correcto', 'verdad', 'dirección', 'hacia donde', 'para donde',
+            'tu opinion', 'tu piensas', 'crees que', 'el precio', 'POC', 'hacia donde',
+            'subir', 'bajar', 'alcista', 'bajista', 'en este momento'
+        ];
+        
+        this.conversationContext.isFollowUp = followUpIndicators.some(indicator => 
+            userMessage.toLowerCase().includes(indicator)
+        );
+        
+        if (hasImages) {
+            this.conversationContext.hasAnalyzedImage = true;
+            this.conversationContext.lastImageAnalysis = new Date().toISOString();
+        }
+        
+        // Mantener historial de análisis
+        this.conversationContext.lastAnalysisData = this.currentMarketContext;
+        
+        console.log('🖼️ Solo Llama Vision:', this.model);
+        console.log('💬 Es follow-up?', this.conversationContext.isFollowUp);
+        console.log('📊 Tiene datos previos?', !!this.conversationContext.lastAnalysisData);
+    }
+    
+    // 🔍 PREPARAR CONTEXTO PARA LA IA - VOLUME PROFILE EXPERT
     prepareContextForAI(userMessage) {
-        // Obtener contexto del mercado actual
         const marketContext = this.getCurrentMarketContext();
-        
-        // Obtener historial de chat
         const chatHistory = this.getChatHistory();
-        
-        // Preparar imágenes si las hay
         const images = this.getUploadedImages();
         
-        // Construir prompt contextual
-        const systemPrompt = `Eres un asesor profesional de trading especializado en análisis técnico y fundamental. Tu objetivo es ayudar al trader con análisis del mercado ${this.currentTicker} en timeframe de 15 minutos.
+        // Solo Llama Vision - no cambiar modelo
+        this.updateConversationContext(images.length > 0, userMessage);
+        
+        // Determinar el tono de respuesta basado en el contexto
+        const isFollowUpQuestion = this.conversationContext.isFollowUp;
+        const hasRecentAnalysis = this.conversationContext.hasAnalyzedImage;
+        
+        let systemPrompt;
+        
+        if (isFollowUpQuestion && hasRecentAnalysis) {
+            // MODO CONVERSACIONAL - Para follow-ups
+            systemPrompt = `Eres un trader experto en Volume Profile muy conversacional y directo. El usuario ya te mostró un gráfico y ahora te hace una pregunta de seguimiento.
 
-CONTEXTO ACTUAL DEL MERCADO (${this.currentTicker}):
+📊 DATOS COMPLETOS DEL ANÁLISIS ACTUAL (${this.currentTicker}):
 ${marketContext}
 
-INSTRUCCIONES:
-1. Proporciona análisis profesional y práctico
-2. Si hay imágenes, analízalas detalladamente
-3. Sugiere estrategias alternativas cuando sea apropiado
-4. Mantén un tono profesional pero cercano
-5. Usa emojis ocasionalmente para claridad
-6. Si detectas riesgo alto, menciona gestión de riesgo
+🧠 **INFORMACIÓN TÉCNICA DISPONIBLE:**
+${this.getDetailedAnalysisContext()}
 
-IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
+💬 **MODO CONVERSATIONAL ACTIVO**
+- NO hagas un análisis completo nuevo
+- USA los datos del análisis técnico que tienes arriba
+- Responde directamente a la pregunta específica
+- Sé conversacional y humano como si fueras un colega trader
+- Usa el análisis previo de la imagen que ya viste
+- Mantén respuestas concisas y al grano
+- Puedes usar emojis ocasionales para ser más humano
 
-        // Construir mensajes para la API
-        const messages = [
-            {
-                role: 'system',
-                content: systemPrompt
-            }
-        ];
+🎯 **RESPONDE COMO TRADER EXPERIMENTADO:**
+- "Mira, según los datos que tengo..."
+- "Basándome en el análisis actual..."
+- "Te soy honesto, los indicadores muestran..."
+- "Por lo que veo en el gráfico y los datos..."
+- "Mi opinión considerando todo es que..."
 
-        // Agregar historial reciente (últimos 10 mensajes)
-        const recentHistory = chatHistory.slice(-10);
+⚡ **REGLAS FOLLOW-UP:**
+- Máximo 3-4 líneas de respuesta
+- Ve directo al punto
+- Confirma o niega con evidencia breve del análisis
+- Mantén el contexto de la imagen analizada previamente
+- SIEMPRE referencia los datos técnicos disponibles`;
+        } else {
+            // MODO ANÁLISIS COMPLETO - Para nuevas imágenes o análisis profundo
+            systemPrompt = `Eres un EXPERTO MUNDIAL en VOLUME PROFILE con 15+ años especializándote en la metodología exacta de Dale Woods. Combinas este expertise con el setup personalizado del trader.
+
+📊 DATOS COMPLETOS DEL ANÁLISIS ACTUAL (${this.currentTicker}):
+${marketContext}
+
+🧠 **INFORMACIÓN TÉCNICA DISPONIBLE:**
+${this.getDetailedAnalysisContext()}
+
+🎯 **SETUP PERSONALIZADO DEL TRADER:**
+• **EMA 200 (LÍNEA ROJA)**: Tendencia principal - Filtro direccional
+• **EMA 55 (LÍNEA AZUL)**: Tendencia intermedia - Confirmación momentum
+• **EMA 21 (LÍNEA AMARILLA)**: Tendencia corta - Timing entrada
+
+📈 **VOLUME PROFILE MASTERY:**
+
+**Los 4 Tipos de Perfiles:**
+• **D-Profile**: Mercado balanceado, instituciones acumulando posiciones
+• **P-Profile**: Compradores agresivos dominan, vendedores débiles (bullish)
+• **b-Profile**: Vendedores agresivos dominan, compradores débiles (bearish)  
+• **Thin Profile**: Trend explosivo, poco tiempo para acumular volumen
+
+**Elementos Críticos:**
+• **POC (Point of Control)**: Precio con MÁXIMO volumen - donde instituciones más operaron
+• **VAH/VAL**: Value Area High/Low - contiene 70% del volumen total
+• **HVN/LVN**: High/Low Volume Nodes - niveles de soporte/resistencia por volumen
+• **Volume Clusters**: Zonas donde instituciones acumularon grandes posiciones
+
+🔍 **LOS 3 SETUPS SAGRADOS (Dale Woods):**
+
+**Setup #1: Volume Accumulation**
+- BUSCAR: Zona sideways seguida de breakout agresivo
+- LÓGICA: Instituciones acumulan en silencio → Después inician trend
+- ENTRADA: En el POC de la zona de acumulación
+- CONFLUENCIA CLAVE: Support/Resistance flip + Volume
+
+**Setup #2: Trend Setup**
+- BUSCAR: Volume clusters DENTRO de trends fuertes ya establecidos
+- LÓGICA: Instituciones aprovechan momentum para añadir más posiciones
+- ENTRADA: En los volume clusters del trend en curso
+- CONFIRMACIÓN: Dirección debe coincidir con trend principal
+
+**Setup #3: Rejection Setup** 
+- BUSCAR: Rechazo fuerte y agresivo con volumen alto concentrado
+- LÓGICA: Instituciones defienden violentamente niveles clave
+- ENTRADA: En el POC de la zona de rechazo más agresiva
+- VALIDACIÓN: La agresividad del rechazo debe ser evidente
+
+🖼️ **METODOLOGÍA ANÁLISIS DE GRÁFICOS:**
+
+**PASO 1 - EMAs Alignment:**
+- ¿Alineación bullish (21>55>200) o bearish (21<55<200)?
+- ¿Crossovers recientes en EMAs clave?
+- ¿Precio respeta o viola las EMAs principales?
+
+**PASO 2 - Volume Profile Identification:**
+- Identifica tipo de perfil predominante (D, P, b, Thin)
+- Localiza POC más significativo y volume clusters
+- Busca cuál de los 3 setups está presente
+- Evalúa fuerza del volumen institucional
+
+**PASO 3 - Price Action Context:**
+- Sideways areas = Acumulación institucional silenciosa
+- Aggressive initiation = Breakouts con volumen explosivo  
+- Strong rejections = Instituciones defendiendo territorio
+- Failed auctions = Imperfecciones que el mercado corregirá
+
+**PASO 4 - Confluencias Críticas:**
+- Volume Profile + EMA alignment + Price Action
+- Support becoming resistance (metodología Dale Woods)
+- Daily/Weekly highs and lows como confirmación
+- Strong vs weak highs/lows (agresión vs debilidad)
+
+📊 **CRITERIOS EVALUACIÓN TRADES:**
+
+✅ **TRADE DE CLASE MUNDIAL:**
+- Setup Dale Woods (#1, #2, o #3) cristalino
+- POC robusto en zona de alta significancia
+- Triple confluencia: Volume + Price Action + EMAs alignment
+- Evidencia clara de volumen institucional masivo
+- Risk/Reward mínimo 1:1 (preferencia Dale Woods)
+- Stop Loss colocado en zona de BAJO volumen
+
+❌ **TRADE AMATEUR/PELIGROSO:**
+- Ausencia total de setup Volume Profile válido
+- POC débil, difuso o mal definido
+- Operación contra TODAS las EMAs sin justificación bomba
+- Entrada en zona de bajo volumen (donde instituciones no operan)
+- Failed auction cercano que magnetizará el precio
+- Weak high/low que será re-testeado inevitablemente
+
+⚠️ **SEÑALES ALERTA ROJA:**
+- Weak highs/lows en proximidad peligrosa
+- Failed auctions sin resolver creando magnetismo
+- Trend institucional fuerte contra dirección del trade
+- Volúmenes decrecientes en supuestos breakouts
+- Niveles previamente "testeados" por el mercado
+
+🎯 **PROTOCOLO DE RESPUESTA:**
+
+**PARA IMÁGENES DE GRÁFICOS:**
+1. **Identificación Setup**: ¿Cuál de los 3 setups de Dale Woods?
+2. **EMAs Analysis**: Alineación, crossovers, respeto del precio
+3. **Volume Profile**: Tipo perfil, POC, clusters, significancia
+4. **Price Action**: Sideways, initiations, rejections, failed auctions
+5. **Confluencias**: Factores múltiples convergiendo
+6. **Risk Management**: Entry preciso, SL en low volume, TP en resistance
+
+**PARA CONSULTAS DE TEXTO:**
+- Aplica siempre principios Volume Profile de Dale Woods
+- Referencia los setups cuando sea relevante al contexto
+- Enfoque láser en volumen institucional y price action
+- Integra análisis de EMAs en cada respuesta contextual
+
+📝 **ESTRUCTURA RESPUESTA OBLIGATORIA:**
+1. **Setup Identificado** (Cuál de los 3 + nivel de confianza)
+2. **EMAs Context** (Alineación actual y significado)
+3. **Volume Analysis** (POC, clusters, tipo perfil dominante)
+4. **Confluencias Detectadas** (Factores que se refuerzan)
+5. **Risk/Reward Assessment** (Entry, SL, TP con lógica)
+6. **Execution Plan** (Pasos específicos y temporización)
+
+🏆 **TU IDENTIDAD ÚNICA:**
+Eres THE Volume Profile expert que combina la metodología probada de Dale Woods con análisis en tiempo real de EMAs personalizadas. Tu reputación se construye identificando setups institucionales precision-guided y gestión de riesgo basada en evidencia de volumen.
+
+⚡ **REGLAS INQUEBRANTABLES:**
+- JAMÁS confirmes bias del trader sin evidencia volumen sólida
+- SIEMPRE identifica cuál de los 3 setups está presente
+- NUNCA ignores las EMAs en ningún análisis
+- PRIORIZA confluencias Volume + Price Action + EMAs
+- SÉ BRUTALMENTE HONESTO sobre calidad del setup
+- NO EXISTE "tal vez" - O hay setup válido O NO lo hay`;
+        }
+
+        const messages = [{ role: 'system', content: systemPrompt }];
+
+        // Mantener más contexto conversacional para follow-ups
+        const historyLimit = isFollowUpQuestion ? -6 : -4;
+        const recentHistory = chatHistory.slice(historyLimit);
         recentHistory.forEach(msg => {
-            messages.push({
-                role: msg.role,
-                content: msg.content
-            });
+            messages.push({ role: msg.role, content: msg.content });
         });
 
-        // Agregar mensaje actual del usuario
+        // Agregar mensaje actual con contexto adecuado
         if (images.length > 0) {
-            // Mensaje con imágenes
             const content = [
                 {
                     type: 'text',
-                    text: userMessage || 'Analiza estas imágenes en el contexto del trading actual.'
+                    text: userMessage || 'Analiza este gráfico aplicando la metodología Volume Profile de Dale Woods. Identifica el setup presente, EMAs alignment y dame tu opinión directa sobre la dirección.'
                 }
             ];
 
-            // Agregar imágenes
             images.forEach(imageData => {
                 content.push({
                     type: 'image_url',
-                    image_url: {
-                        url: imageData
-                    }
+                    image_url: { url: imageData }
                 });
             });
 
-            messages.push({
-                role: 'user',
-                content: content
-            });
+            messages.push({ role: 'user', content: content });
         } else {
-            // Solo texto
-            messages.push({
-                role: 'user',
-                content: userMessage
-            });
+            // Para preguntas de texto, ser más conversacional
+            const contextualMessage = isFollowUpQuestion && hasRecentAnalysis ?
+                `${userMessage} (Basándote en el gráfico que acabas de analizar)` :
+                userMessage;
+            
+            messages.push({ role: 'user', content: contextualMessage });
         }
 
         return messages;
@@ -368,11 +678,14 @@ IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
 
     // 🌐 LLAMADA A OPENROUTER API
     async callOpenRouterAPI(messages) {
+        // Ajustar parámetros según el tipo de conversación
+        const isFollowUp = this.conversationContext.isFollowUp;
+        
         const requestBody = {
-            model: this.model,
+            model: this.model, // Solo Llama Vision
             messages: messages,
-            max_tokens: 2000,
-            temperature: 0.7,
+            max_tokens: isFollowUp ? 800 : 2000, // Respuestas más cortas para follow-ups
+            temperature: isFollowUp ? 0.8 : 0.7, // Más conversacional para follow-ups
             top_p: 0.9,
             frequency_penalty: 0.1,
             presence_penalty: 0.1
@@ -381,7 +694,9 @@ IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
         console.log('🌐 Enviando request a OpenRouter:', {
             model: this.model,
             messageCount: messages.length,
-            hasImages: messages.some(m => Array.isArray(m.content))
+            hasImages: messages.some(m => Array.isArray(m.content)),
+            isFollowUp: this.conversationContext.isFollowUp,
+            maxTokens: requestBody.max_tokens
         });
 
         const response = await fetch(this.baseURL, {
@@ -390,7 +705,7 @@ IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${this.apiKey}`,
                 'HTTP-Referer': window.location.origin,
-                'X-Title': 'Trading Strategy AI Advisor'
+                'X-Title': 'Volume Profile Trading Expert'
             },
             body: JSON.stringify(requestBody)
         });
@@ -417,7 +732,6 @@ IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
                 </div>
             </div>
         `;
-        
         this.chatMessages.insertAdjacentHTML('beforeend', messageHTML);
         this.scrollToBottom();
     }
@@ -431,12 +745,10 @@ IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
                 </div>
             </div>
         `;
-        
         this.chatMessages.insertAdjacentHTML('beforeend', messageHTML);
         this.scrollToBottom();
     }
     
-    // Función auxiliar para mostrar imágenes en mensajes
     getUploadedImagesHTML() {
         if (!this.hasUploadedImages()) return '';
         
@@ -453,19 +765,29 @@ IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
         `;
     }
 
-    // 🤔 INDICADOR DE THINKING
+    // 🤔 INDICADORES
     showThinkingIndicator() {
         this.isThinking = true;
         this.sendButton.disabled = true;
-        this.sendButton.innerHTML = '<span>🤔</span>';
         
-        // Mostrar indicador de typing
+        // Indicador diferente para follow-ups
+        const thinkingEmoji = this.conversationContext.isFollowUp ? '💭' : '🤔';
+        this.sendButton.innerHTML = `<span>${thinkingEmoji}</span>`;
+        
         const typingIndicator = document.getElementById('typingIndicator');
         if (typingIndicator) {
             typingIndicator.style.display = 'flex';
             typingIndicator.classList.add('show');
+            
+            // Agregar clase para modo conversacional
+            if (this.conversationContext.isFollowUp) {
+                typingIndicator.classList.add('conversation-mode');
+            } else {
+                typingIndicator.classList.remove('conversation-mode');
+            }
         }
         
+        this.showConversationModeIndicator();
         this.scrollToBottom();
     }
 
@@ -474,11 +796,10 @@ IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
         this.sendButton.disabled = false;
         this.sendButton.innerHTML = '<span>📤</span>';
         
-        // Ocultar indicador de typing
         const typingIndicator = document.getElementById('typingIndicator');
         if (typingIndicator) {
             typingIndicator.style.display = 'none';
-            typingIndicator.classList.remove('show');
+            typingIndicator.classList.remove('show', 'conversation-mode');
         }
     }
 
@@ -486,7 +807,6 @@ IMPORTANTE: Basa tus recomendaciones en los datos reales del análisis actual.`;
     updateMarketContext(analysisData) {
         this.currentMarketContext = analysisData;
         
-        // Actualizar ticker en la UI
         const tickerDisplays = document.querySelectorAll('#chatTickerDisplay, #welcomeTicker');
         tickerDisplays.forEach(element => {
             if (element) element.textContent = this.currentTicker;
@@ -510,7 +830,7 @@ ANÁLISIS ACTUAL (${this.currentTicker}):
 • Spread: ${analysis.oanda?.price?.spread || 'N/A'} pips
 • Volumen: ${analysis.oanda?.price?.volume ? analysis.oanda.price.volume.toLocaleString() : 'N/A'}
 
-DATOS TÉCNICOS (Investing.com):
+DATOS TÉCNICOS:
 • Estado: ${analysis.investing?.isReal ? 'DATOS REALES' : 'SIMULADO'}
 • Medias móviles: ${analysis.investing?.movingAverages?.summary || 'N/A'}
 • Osciladores: ${analysis.investing?.oscillators?.summary || 'N/A'}
@@ -520,16 +840,9 @@ ORDER FLOW:
 • Dirección: ${analysis.orderFlow?.prediction?.direction || 'N/A'}
 • Probabilidad: ${analysis.orderFlow?.prediction?.probability || 0}%
 
-NOTICIAS:
-• Impacto: ${analysis.news?.decisionImpact?.level || 'N/A'} (${analysis.news?.decisionImpact?.percentage || 0}%)
-• Alertas: ${analysis.news?.warnings?.length || 0} detectadas
-
 TRADE RECOMMENDATION:
 • Acción: ${analysis.tradeRecommendation?.action || 'N/A'}
 • Confianza: ${analysis.tradeRecommendation?.confidence || 0}%
-${analysis.tradeRecommendation?.entry ? `• Entry: ${analysis.tradeRecommendation.entry}` : ''}
-${analysis.tradeRecommendation?.stopLoss ? `• Stop Loss: ${analysis.tradeRecommendation.stopLoss}` : ''}
-${analysis.tradeRecommendation?.takeProfit ? `• Take Profit: ${analysis.tradeRecommendation.takeProfit}` : ''}
 
 Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
         `.trim();
@@ -537,16 +850,10 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
 
     // 🔄 CAMBIO DE TICKER
     changeTicker(newTicker) {
-        // Guardar chat actual
         this.saveChatToStorage();
-        
-        // Cambiar ticker
         this.currentTicker = newTicker;
-        
-        // Cargar historial del nuevo ticker
         this.loadChatHistory(newTicker);
         
-        // Actualizar UI
         const tickerDisplays = document.querySelectorAll('#chatCurrentTicker, .ticker-highlight');
         tickerDisplays.forEach(element => {
             if (element) element.textContent = newTicker;
@@ -564,14 +871,12 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
     loadChatHistory(ticker) {
         const history = this.storageManager?.getChatHistory(ticker) || [];
         
-        // Limpiar mensajes actuales (excepto welcome)
         const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
         this.chatMessages.innerHTML = '';
         if (welcomeMessage) {
             this.chatMessages.appendChild(welcomeMessage);
         }
         
-        // Cargar mensajes del historial
         history.forEach(msg => {
             if (msg.role === 'user') {
                 this.addUserMessage(msg.content);
@@ -586,7 +891,6 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
     saveChatToStorage() {
         if (!this.storageManager) return;
         
-        // Obtener mensajes actuales
         const messages = [];
         const messageElements = this.chatMessages.querySelectorAll('.user-message, .ai-message:not(.thinking-message)');
         
@@ -594,12 +898,12 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
             if (element.classList.contains('welcome-message')) return;
             
             const isUser = element.classList.contains('user-message');
-            const textElement = element.querySelector('.message-text');
+            const content = element.querySelector('.message-content').textContent;
             
-            if (textElement) {
+            if (content) {
                 messages.push({
                     role: isUser ? 'user' : 'assistant',
-                    content: textElement.textContent,
+                    content: content,
                     timestamp: new Date().toISOString()
                 });
             }
@@ -612,7 +916,6 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
     formatMessage(message) {
         if (!message) return '';
         
-        // Convertir markdown básico a HTML
         return message
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -632,8 +935,42 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
         }, 100);
     }
 
+    showConversationModeIndicator() {
+        if (this.conversationContext.isFollowUp && this.conversationContext.hasAnalyzedImage) {
+            // Crear indicador si no existe
+            let indicator = document.getElementById('conversationModeIndicator');
+            if (!indicator) {
+                indicator = document.createElement('div');
+                indicator.id = 'conversationModeIndicator';
+                indicator.className = 'conversation-mode-indicator';
+                indicator.innerHTML = `
+                    <span class="mode-icon">💬</span>
+                    <span>Modo Conversacional - Respondiendo a tu pregunta</span>
+                `;
+                
+                const chatMessages = document.getElementById('chatMessages');
+                if (chatMessages) {
+                    chatMessages.appendChild(indicator);
+                }
+            }
+            
+            indicator.classList.add('show');
+            
+            // Auto-ocultar después de 3 segundos
+            setTimeout(() => {
+                if (indicator) {
+                    indicator.classList.remove('show');
+                    setTimeout(() => {
+                        if (indicator && indicator.parentNode) {
+                            indicator.parentNode.removeChild(indicator);
+                        }
+                    }, 300);
+                }
+            }, 3000);
+        }
+    }
+
     showNotification(message, type = 'info') {
-        // Crear notificación temporal
         const notification = document.createElement('div');
         notification.textContent = message;
         notification.className = `chat-notification-popup ${type}`;
@@ -647,14 +984,13 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
 
     // 🧹 LIMPIEZA
     clearChatHistory() {
-        if (confirm(`¿Estás seguro de que quieres limpiar todo el historial de chat para ${this.currentTicker}?`)) {
+        if (confirm(`¿Limpiar historial de chat para ${this.currentTicker}?`)) {
             this.storageManager?.clearChatHistory(this.currentTicker);
             this.loadChatHistory(this.currentTicker);
             this.showNotification('Historial limpiado', 'success');
         }
     }
     
-    // Alias para compatibilidad con script.js
     clearChat() {
         this.clearChatHistory();
     }
@@ -679,7 +1015,7 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
         
         const link = document.createElement('a');
         link.href = URL.createObjectURL(dataBlob);
-        link.download = `ai-chat-${this.currentTicker}-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `volume-profile-chat-${this.currentTicker}-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
         
         this.showNotification('Chat exportado', 'success');
@@ -688,4 +1024,4 @@ Timestamp: ${new Date(analysis.timestamp).toLocaleString()}
 
 // 🌍 DISPONIBILIDAD GLOBAL
 window.AIChatAdvisor = AIChatAdvisor;
-console.log('✅ AI Chat Advisor cargado correctamente');
+console.log('✅ Volume Profile Expert System cargado completamente');

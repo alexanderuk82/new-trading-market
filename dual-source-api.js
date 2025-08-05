@@ -30,79 +30,62 @@ class DualSourceAPI {
 
 
     async getAlphaVantagePrice(instrument) {
-    try {
-        const ticker = this.convertToAlphaFormat(instrument);
-        const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${this.alphaVantageKey}`;
-        
-        console.log(`🔍 ALPHA VANTAGE DEBUG:`);
-        console.log(`   📍 Instrument: ${instrument} → Ticker: ${ticker}`);
-        console.log(`   🌐 URL: ${url}`);
-        console.log(`   🔑 API Key: ${this.alphaVantageKey}`);
-        
-        const response = await fetch(url);
-        
-        console.log(`   📡 Response Status: ${response.status} ${response.statusText}`);
-        console.log(`   📡 Response OK: ${response.ok}`);
-        
-        const data = await response.json();
-        
-        console.log(`   📦 Response Data COMPLETA:`, JSON.stringify(data, null, 2));
-
-        // 🔍 DEBUG DETALLADO DE LA ESTRUCTURA
-console.log(`   🔍 Global Quote exists:`, 'Global Quote' in data);
-console.log(`   🔍 Global Quote content:`, data['Global Quote']);
-if (data['Global Quote']) {
-    console.log(`   🔍 Global Quote keys:`, Object.keys(data['Global Quote']));
-    console.log(`   🔍 Price field ('05. price'):`, data['Global Quote']['05. price']);
-}
-        // 🔍 VERIFICAR TODOS LOS POSIBLES ERRORES
-console.log(`   🔍 Verificando errores en respuesta...`);
-console.log(`   🔍 Error Message:`, data['Error Message']);
-console.log(`   🔍 Note:`, data['Note']);
-console.log(`   🔍 Information:`, data['Information']);
-console.log(`   🔍 Todas las keys:`, Object.keys(data));
-        // Verificar si hay error en la respuesta
-        if (data['Error Message']) {
-            console.error(`   ❌ Alpha Vantage Error: ${data['Error Message']}`);
-            throw new Error(`Alpha Vantage API Error: ${data['Error Message']}`);
+        try {
+            const ticker = this.convertToAlphaFormat(instrument);
+            const url = `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${this.alphaVantageKey}`;
+            
+            console.log(`🔍 Alpha Vantage request para ${instrument} (${ticker})`);
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            // 🔍 DEBUG solo si hay problemas
+            if (!data['Global Quote']) {
+                console.log(`⚠️ Alpha Vantage respuesta:`, Object.keys(data));
+                if (data['Information']) {
+                    console.log(`📝 Information:`, data['Information']);
+                }
+            }
+            
+            // Verificar errores comunes
+            if (data['Information'] && data['Information'].includes('API call frequency')) {
+                console.warn(`⚠️ Alpha Vantage: API Limit alcanzado`);
+                throw new Error('Alpha Vantage API Limit reached');
+            }
+            
+            if (data['Error Message']) {
+                console.error(`❌ Alpha Vantage Error: ${data['Error Message']}`);
+                throw new Error(`Alpha Vantage API Error: ${data['Error Message']}`);
+            }
+            
+            if (data['Note']) {
+                console.warn(`⚠️ Alpha Vantage Note: ${data['Note']}`);
+                throw new Error(`Alpha Vantage API Limit: ${data['Note']}`);
+            }
+            
+            if (data['Global Quote']) {
+                const quote = data['Global Quote'];
+                const priceField = quote['05. price'] || quote['price'] || quote['Price'] || quote['05.price'];
+                
+                if (priceField) {
+                    const processed = this.processAlphaVantageData(quote, instrument);
+                    this.dataQuality.alphaVantage = 85;
+                    console.log(`✅ Alpha Vantage: Precio obtenido ${priceField}`);
+                    return { source: 'ALPHA_VANTAGE', data: processed, quality: 85 };
+                } else {
+                    throw new Error('No price field found in Global Quote');
+                }
+            } else {
+                // Error común - respuesta no contiene Global Quote
+                throw new Error('Alpha Vantage: No Global Quote data (posible API limit)');
+            }
+            
+        } catch (error) {
+            console.warn(`⚠️ Alpha Vantage no disponible: ${error.message}`);
+            this.dataQuality.alphaVantage = 0;
+            return { source: 'ALPHA_VANTAGE', error: error.message, quality: 0 };
         }
-        
-        if (data['Note']) {
-            console.warn(`   ⚠️ Alpha Vantage Note: ${data['Note']}`);
-            throw new Error(`Alpha Vantage API Limit: ${data['Note']}`);
-        }
-        
-        if (data['Global Quote']) {
-    console.log(`   🔍 Global Quote encontrado, verificando campos...`);
-    const quote = data['Global Quote'];
-    console.log(`   🔍 Todos los campos:`, Object.keys(quote));
-    
-    // Buscar el campo de precio (puede variar el formato)
-    const priceField = quote['05. price'] || quote['price'] || quote['Price'] || quote['05.price'];
-    
-    if (priceField) {
-        console.log(`   ✅ Precio encontrado: ${priceField}`);
-        const processed = this.processAlphaVantageData(quote, instrument);
-        this.dataQuality.alphaVantage = 85;
-        console.log(`   ✅ Datos procesados:`, processed);
-        return { source: 'ALPHA_VANTAGE', data: processed, quality: 85 };
-    } else {
-        console.error(`   ❌ No se encontró campo de precio en Global Quote`);
-        console.log(`   🔍 Campos disponibles:`, Object.keys(quote));
-        throw new Error('No price field found in Global Quote');
     }
-} else {
-            console.error(`   ❌ No se encontró 'Global Quote' en la respuesta`);
-            console.log(`   🔍 Estructura de la respuesta:`, Object.keys(data));
-            throw new Error('No Global Quote data from Alpha Vantage');
-        }
-        
-    } catch (error) {
-        console.error(`   ❌ Error completo en Alpha Vantage:`, error);
-        this.dataQuality.alphaVantage = 0;
-        return { source: 'ALPHA_VANTAGE', error: error.message, quality: 0 };
-    }
-}
 
     convertToAlphaFormat(instrument) {
     const map = {
@@ -162,50 +145,43 @@ console.log(`   🔍 Todas las keys:`, Object.keys(data));
     // }
 
     analyzeDualResults(results, instrument) {
-    const [oandaResult, alphaResult] = results;
-    
-    console.log(`🔍 ANÁLISIS DUAL RESULTS para ${instrument}:`);
-    console.log(`   📊 OANDA Status: ${oandaResult.status}`);
-    console.log(`   📊 Alpha Status: ${alphaResult.status}`);
-    
-    if (oandaResult.status === 'fulfilled') {
-        console.log(`   ✅ OANDA Data:`, oandaResult.value);
-    } else {
-        console.log(`   ❌ OANDA Error:`, oandaResult.reason);
+        const [oandaResult, alphaResult] = results;
+        
+        console.log(`🔍 Análisis dual para ${instrument}:`);
+        console.log(`   OANDA: ${oandaResult.status === 'fulfilled' ? '✅' : '❌'}`);
+        console.log(`   Alpha: ${alphaResult.status === 'fulfilled' ? '✅' : '❌'}`);
+        
+        // Si ambas funcionan, validar cruzadamente
+        if (oandaResult.status === 'fulfilled' && alphaResult.status === 'fulfilled') {
+            console.log(`🔄 Validación cruzada...`);
+            return this.performCrossValidation(oandaResult.value, alphaResult.value, instrument);
+        }
+        
+        // Si solo OANDA funciona (caso más común)
+        if (oandaResult.status === 'fulfilled' && oandaResult.value.data) {
+            console.log(`🔥 Solo OANDA disponible - Continuando con datos OANDA`);
+            return { 
+                ...oandaResult.value.data, 
+                validationStatus: 'SINGLE_SOURCE_OANDA',
+                qualityScore: oandaResult.value.quality,
+                alphaVantageError: alphaResult.reason?.message || 'Alpha Vantage no disponible'
+            };
+        }
+        
+        // Si solo Alpha Vantage funciona
+        if (alphaResult.status === 'fulfilled') {
+            console.log(`🔥 Solo Alpha Vantage disponible`);
+            return { 
+                ...alphaResult.value.data, 
+                validationStatus: 'SINGLE_SOURCE_ALPHA',
+                qualityScore: alphaResult.value.quality
+            };
+        }
+        
+        // Si ambas fallan, usar fallback
+        console.warn(`⚠️ Ambas APIs fallaron, usando fallback`);
+        return this.oandaAPI.getFallbackPrice(instrument);
     }
-    
-    if (alphaResult.status === 'fulfilled') {
-        console.log(`   ✅ Alpha Data:`, alphaResult.value);
-    } else {
-        console.log(`   ❌ Alpha Error:`, alphaResult.reason);
-    }
-    
-    // Si ambas funcionan, validar cruzadamente
-    if (oandaResult.status === 'fulfilled' && alphaResult.status === 'fulfilled') {
-        console.log(`   🔄 Realizando validación cruzada...`);
-        return this.performCrossValidation(oandaResult.value, alphaResult.value, instrument);
-    }
-    
-    // Si solo una funciona, usar esa
-   // Si solo una funciona, usar esa
-if (oandaResult.status === 'fulfilled' && oandaResult.value.data) {
-    console.log(`   ⚠️ Solo OANDA disponible - Alpha Vantage falló`);
-    return { 
-        ...oandaResult.value.data, 
-        validationStatus: 'SINGLE_SOURCE_OANDA',
-        alphaVantageError: alphaResult.reason || 'Alpha Vantage no disponible'
-    };
-}
-    
-    if (alphaResult.status === 'fulfilled') {
-        console.log(`   ⚠️ Solo Alpha Vantage disponible`);
-        return { ...alphaResult.value.data, validationStatus: 'SINGLE_SOURCE_ALPHA' };
-    }
-    
-    // Si ambas fallan, usar fallback
-    console.log(`   ❌ Ambas APIs fallaron, usando fallback`);
-    return this.oandaAPI.getFallbackPrice(instrument);
-}
 
     performCrossValidation(oandaResult, alphaResult, instrument) {
     console.log(`   🔍 VALIDACIÓN CRUZADA:`, { oandaResult, alphaResult });

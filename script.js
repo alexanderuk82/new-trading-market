@@ -1449,6 +1449,14 @@ updateLiquidityData(liquidityData) {
             });
         }
         
+        // Botón de cambiar modelo
+        const chatModelBtn = document.getElementById('chatModelBtn');
+        if (chatModelBtn && this.aiChatAdvisor) {
+            chatModelBtn.addEventListener('click', () => {
+                this.aiChatAdvisor.configureModel();
+            });
+        }
+        
         // Botón de expandir chat
         const chatExpandBtn = document.getElementById('chatExpandBtn');
         const chatSection = document.querySelector('.ai-chat-section');
